@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+:root {
+  --surface: #0f1520;
+  --surface-secondary: #141c2e;
+  --text-primary: #e8edf5;
+  --text-secondary: rgba(232,237,245,0.55);
+  --border: rgba(255,255,255,0.08);
+  --color-border-tertiary: rgba(255,255,255,0.06);
+  --accent: #1D9E75;
+}
+
+* {
+  box-sizing: border-box;
+  /* Touch table: prevents the double-tap-to-zoom delay/misfire everywhere.
+     The map canvas opts back out below so pinch/pan gestures still work. */
+  touch-action: manipulation;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ── Touch table: minimum tap targets ─────────────────────────────────
+   This app styles buttons with inline `style={{}}` rather than utility
+   classes, and none of them set an inline height/min-height/width — so a
+   plain element selector (not a class that would need adding everywhere)
+   raises every real <button> in the app to a genuine touch target without
+   fighting any inline style or touching component code. */
+button {
+  min-height: 40px;
+  min-width: 40px;
+  touch-action: manipulation;
+}
+
+/* Year range sliders — bigger track + thumb for finger dragging */
+input[type='range'] {
+  accent-color: #1D9E75;
+  cursor: pointer;
+  height: 44px;
+}
+input[type='range']::-webkit-slider-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1D9E75;
+  cursor: grab;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+input[type='range']::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+}
+
+/* The deck.gl map canvas needs its own pan/pinch/rotate gestures — the
+   app-wide touch-action: manipulation above would otherwise block them. */
+#map-container canvas {
+  touch-action: none;
+}
+
+/* ── Large touch-wall display ──────────────────────────────────────────
+   Scales the root font size rather than targeting specific component
+   class names: every heading/label/value in this app is sized with
+   Tailwind's rem-based text utilities (text-xs..text-3xl), which are all
+   relative to this root size, so one rule proportionally enlarges every
+   piece of text app-wide for readability from standing distance. */
+@media (min-width: 1920px) {
+  html, body {
+    font-size: 18px;
+  }
+}
+
+/* ── Progressive loading animations ─────────────────────────────────── */
+
+@keyframes stripe-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.85; }
+}
+
+/* Applied by D3 to SVG rects in decade stage */
+.stripe-uncertain {
+  animation: stripe-pulse 1.5s ease-in-out infinite;
+}
+
+/* Applied by D3 to SVG rects entering in full stage */
+@keyframes fade-in-left {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.stripe-entering {
+  animation: fade-in-left 0.5s ease-out forwards;
+}
+
+/* Shimmer sweep for progress bar active segment */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.shimmer-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 25%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* Pulsing dot for loading badges */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
+.loading-dot {
+  animation: dot-pulse 1.2s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* ── Feature 1: drought↔flood correlation highlight ────────────────────
+   Applied to the SVG <rect> outline FloodDashboard draws around the
+   correlated bar — a real DOM element (unlike deck.gl's WebGL-rendered
+   flood-extent polygons, which can't be CSS-animated and instead pulse via
+   the JS rAF clock in BavariaMap.tsx). */
+@keyframes flood-pulse-outline {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+
+.flood-pulse-outline {
+  animation: flood-pulse-outline 1.4s ease-in-out infinite;
+}
+
+/* ── Feature 5b: position-aware display hint for large touch walls ─────
+   Only relevant above 1920px (the touch-wall breakpoint already used
+   above for font scaling) — smaller/desktop displays don't show this. */
+@media (min-width: 1920px) {
+  #map-container::after {
+    content: 'Touch any region to explore its climate story';
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(10, 16, 24, 0.6);
+    padding: 6px 16px;
+    border-radius: 20px;
+    pointer-events: none;
+    z-index: 5;
+    white-space: nowrap;
+  }
+}
