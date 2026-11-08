@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
+import ShareQR from '../UI/ShareQR'
 
 export default function PersonalStory() {
   const { selectedTown, yearlyData, birthYear, setBirthYear } = useAppStore()
@@ -101,6 +102,8 @@ export default function PersonalStory() {
         by <strong style={{ color: '#FAC775' }}>+{Math.max(0, hotDayIncrease)} per year</strong>{' '}
         compared to the mid-20th-century baseline.
       </div>
+
+      <ShareQR />
 
       <div className="mt-8 text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
         {selectedTown?.country === 'AT'

@@ -27,6 +27,17 @@ export type ProgressStage = 'decade' | 'yearly' | 'full'
 export type DemoStage    = 'idle' | 'decade' | 'yearly' | 'full'
 export type RiverName    = 'Danube' | 'Inn' | 'Isar' | 'Lech'
 
+// Feature 4 — hidden usability-study mode (Shift+E or ?eval=true). Professor:
+// "We need a solid evaluation. You can measure how quickly someone
+// identifies the drought situation of Regensburg in 1952."
+export interface EvalResult {
+  taskId: string
+  startTime: number
+  endTime: number | null
+  completed: boolean
+  answer: string | null
+}
+
 interface AppState {
   selectedTown: TownData | null
   activeLayer: Layer
@@ -60,16 +71,26 @@ interface AppState {
   animationYear: number | null
   isAnimating: boolean
   animationSpeed: number
-  // river wall
+  // selected river — drives the 2D river profile panel (RiverProfile.tsx)
   selectedRiver: RiverName
-  // H-N6 — second river to render as a side-by-side Space-Time Wall for
-  // direct comparison against selectedRiver (null = comparison off).
+  // Second river to render as a 2D overlaid comparison chart against
+  // selectedRiver (RiverComparison.tsx). Null = comparison off.
   compareRiver: RiverName | null
+  // Whether the River Profile floating panel is open (river or lake mode)
+  showRiverProfile: boolean
+  // Lake currently shown in the profile panel instead of a river (null =
+  // panel is in river mode). Set independently from selectedRiver so
+  // picking a lake doesn't require clearing which river is selected.
+  selectedLake: string | null
   // decade split-map comparison (1950s vs 2010s drought)
   splitMode: boolean
   splitX: number
   // drought hotspot overlay
   showHotspots: boolean
+  // District clicked on the Drought tab — drives DroughtDistrictPanel.tsx's
+  // drill-down chart. `id` is the numeric seed getDistrictDrought expects
+  // (ID_3 for Bavaria, iso for Austria — both already small integers).
+  selectedDistrict: { id: number; name: string } | null
   // Feature 4 — user-steered progressive loading: which decade (e.g. 1970)
   // the user is currently hovering on the warming stripes, so monthly detail
   // for that decade gets fetched ahead of the rest.
@@ -80,6 +101,10 @@ interface AppState {
   // scrolling into the story genuinely gates when full resolution loads,
   // not just when a reveal animation plays.
   scrollUnlockedFull: boolean
+  // Feature 4 — evaluation task mode
+  evalMode: boolean
+  evalTaskIndex: number
+  evalResults: EvalResult[]
   setSelectedTown: (town: TownData) => void
   setActiveLayer: (layer: Layer) => void
   setStartYear: (year: number) => void
@@ -104,9 +129,15 @@ interface AppState {
   setAnimationSpeed: (s: number) => void
   setSelectedRiver:   (r: RiverName) => void
   setCompareRiver:    (r: RiverName | null) => void
+  setShowRiverProfile: (v: boolean) => void
+  setSelectedLake:     (id: string | null) => void
   setSplitMode: (v: boolean) => void
   setSplitX: (x: number) => void
   setShowHotspots: (v: boolean) => void
+  setSelectedDistrict: (d: { id: number; name: string } | null) => void
+  setEvalMode: (v: boolean) => void
+  setEvalTaskIndex: (i: number) => void
+  addEvalResult: (r: EvalResult) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -132,11 +163,17 @@ export const useAppStore = create<AppState>((set) => ({
   animationSpeed: 1,
   selectedRiver: 'Danube',
   compareRiver: null,
+  showRiverProfile: false,
+  selectedLake: null,
   splitMode: false,
   splitX: 0.5,
   showHotspots: false,
+  selectedDistrict: null,
   priorityDecade: null,
   scrollUnlockedFull: false,
+  evalMode: false,
+  evalTaskIndex: 0,
+  evalResults: [],
   setSelectedTown: (town) => set({ selectedTown: town }),
   setActiveLayer: (layer) => set({ activeLayer: layer }),
   setStartYear:   (year) => set({ startYear: year }),
@@ -159,9 +196,15 @@ export const useAppStore = create<AppState>((set) => ({
   setAnimationSpeed: (s) => set({ animationSpeed: s }),
   setSelectedRiver:  (r) => set({ selectedRiver: r }),
   setCompareRiver:   (r) => set({ compareRiver: r }),
+  setShowRiverProfile: (v) => set({ showRiverProfile: v }),
+  setSelectedLake:     (id) => set({ selectedLake: id }),
   setSplitMode: (v) => set({ splitMode: v }),
   setSplitX:    (x) => set({ splitX: x }),
   setShowHotspots: (v) => set({ showHotspots: v }),
+  setSelectedDistrict: (d) => set({ selectedDistrict: d }),
   setPriorityDecade: (decade) => set({ priorityDecade: decade }),
   setScrollUnlockedFull: (v) => set({ scrollUnlockedFull: v }),
+  setEvalMode: (v) => set({ evalMode: v }),
+  setEvalTaskIndex: (i) => set({ evalTaskIndex: i }),
+  addEvalResult: (r) => set(s => ({ evalResults: [...s.evalResults, r] })),
 }))

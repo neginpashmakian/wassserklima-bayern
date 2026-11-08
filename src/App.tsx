@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import BavariaMap from './components/Map/BavariaMap'
 import StoryContainer from './components/Story/StoryContainer'
 import GestureHints from './components/UI/GestureHints'
+import EvaluationMode from './components/UI/EvaluationMode'
 import { useAppStore } from './store/useAppStore'
 import { BAVARIAN_TOWNS } from './utils/geoData'
 import { useClimateData } from './hooks/useClimateData'
@@ -22,6 +23,7 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      <EvaluationMode />
       <GestureHints />
       <BavariaMap />
 
@@ -52,7 +54,7 @@ export default function App() {
           background: '#0f1520',
         }}
       >
-        <span>Data: Open-Meteo API · HND Bayern · DWD · 1950–2024</span>
+        <span>Data: Open-Meteo · GeoSphere Austria · WSV Pegelonline (live) · simulated where noted · 1950–2024</span>
         <span>WasserKlima Bayern · Master Thesis · University of Passau · 2026</span>
       </div>
     </div>

@@ -53,22 +53,15 @@ export function getLinzDanubeSeries(startYear = 1950, endYear = 2024): FloodRead
   return generateAustriaFloodData(TOWN_SEEDS.Linz, startYear, endYear, historical)
 }
 
-// Best-effort only — eHYD has no simple historical REST API, and this
-// Lower-Austria live-level page is HTML, not JSON. If it fails (CORS,
-// non-JSON body, network), we silently keep using historical + simulated
-// data — that's the expected path, not an error state.
-async function tryFetchLiveLevel(): Promise<void> {
-  try {
-    const res = await fetch('https://www.noel.gv.at/wasserstand/')
-    await res.text()
-  } catch {
-    // ignored — historical + simulated data already in state
-  }
-}
-
+// eHYD (Austria's hydrographic portal) has no simple historical REST API —
+// only CSV downloads through a web UI — so there's no live-fetch tier here.
+// A live-level fetch from noel.gv.at was tried in an earlier version of
+// this hook, but that page returns HTML (not JSON) and the fetched text was
+// never actually parsed into a real value — it was dead code masquerading
+// as a live-data attempt. Removed rather than kept as a no-op: honest
+// silence about what's real beats a fetch call that implies otherwise.
 export function useAustriaFloodData() {
   const [floodData, setFloodData] = useState<FloodReading[]>(() => getLinzDanubeSeries())
-  const [isLoading,   setIsLoading]   = useState(false)
   const [isSimulated, setIsSimulated] = useState(true)
 
   const loadFloodData = useCallback(async (townName: string) => {
@@ -78,13 +71,7 @@ export function useAustriaFloodData() {
       : undefined
     setFloodData(generateAustriaFloodData(seed, 1950, 2024, historical))
     setIsSimulated(true)
-
-    if (townName === 'Linz') {
-      setIsLoading(true)
-      await tryFetchLiveLevel()
-      setIsLoading(false)
-    }
   }, [])
 
-  return { floodData, isLoading, isSimulated, loadFloodData }
+  return { floodData, isSimulated, loadFloodData }
 }

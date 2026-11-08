@@ -1,11 +1,17 @@
 import { useAppStore } from '../../store/useAppStore'
 import { getColorLegend } from '../../utils/colorScales'
 
-export default function ColorLegend() {
+export default function ColorLegend({ activeCategories }: { activeCategories?: Set<string> }) {
   const activeLayer  = useAppStore(state => state.activeLayer)
   const showHotspots = useAppStore(state => state.showHotspots)
   const type = activeLayer === 'climate' ? 'temp' : activeLayer === 'drought' ? 'drought' : 'flood'
-  const stops = getColorLegend(type)
+  // Drought only: skip categories nothing on screen currently matches (e.g.
+  // "Critical" in a mild year) — professor's US Drought Monitor comparison
+  // implied the legend should reflect what's actually shown, not a fixed
+  // six rows regardless of the data.
+  const stops = getColorLegend(type).filter(
+    s => type !== 'drought' || !activeCategories || activeCategories.has(s.label)
+  )
 
   const title = type === 'temp' ? 'Temp anomaly' : type === 'flood' ? 'Flood level' : 'Drought severity'
 

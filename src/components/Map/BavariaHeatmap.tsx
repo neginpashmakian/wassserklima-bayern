@@ -3,7 +3,7 @@ import { PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { WebMercatorViewport } from '@deck.gl/core'
 import type { Layer, MapViewState } from '@deck.gl/core'
 import { useAppStore } from '../../store/useAppStore'
-import { tempAnomalyColor, droughtColor } from '../../utils/colorScales'
+import { tempAnomalyColor, droughtThresholdColor, droughtThresholdCategory } from '../../utils/colorScales'
 
 // Pre-filtered Bavaria-only GeoJSON bundled in public/. Properties: NAME_3 (district name),
 // ID_3 (integer district ID), NAME_2 (Regierungsbezirk), ID_1=2 (Bayern state code).
@@ -36,7 +36,7 @@ function isUpperAustria(f: AustriaFeature): boolean {
   return (f.properties.iso ?? '').startsWith('4')
 }
 
-function austriaSeed(f: AustriaFeature): number {
+export function austriaSeed(f: AustriaFeature): number {
   return parseInt(f.properties.iso ?? '0', 10) || 0
 }
 
@@ -145,8 +145,11 @@ export interface MapViewport {
 }
 
 export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
-  layers:    Layer[]
-  isLoading: boolean
+  layers:      Layer[]
+  isLoading:   boolean
+  districtGeo: GeoFeature[]
+  austriaGeo:  AustriaFeature[]
+  activeDroughtCategories: Set<string>
 } {
   const activeLayer  = useAppStore(state => state.activeLayer)
   const animationYear = useAppStore(state => state.animationYear)
@@ -187,7 +190,25 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
 
   const isLoading = districtGeo.length === 0
 
-  if (activeLayer === 'flood') return { layers: [], isLoading: false }
+  // Which drought categories actually appear on screen this year — so the
+  // legend can skip rows for categories nothing currently matches (e.g.
+  // "Critical" in a mild year), rather than always listing all six.
+  const activeDroughtCategories = useMemo(() => {
+    if (activeLayer !== 'drought') return new Set<string>()
+    const y = animationYear ?? 2024
+    const cats = new Set<string>()
+    districtGeo.forEach(f => {
+      const cat = droughtThresholdCategory(getDistrictDrought(f.properties.ID_3 ?? 0, y))
+      if (cat) cats.add(cat)
+    })
+    austriaGeo.forEach(f => {
+      const cat = droughtThresholdCategory(getDistrictDrought(austriaSeed(f), y))
+      if (cat) cats.add(cat)
+    })
+    return cats
+  }, [activeLayer, districtGeo, austriaGeo, animationYear])
+
+  if (activeLayer === 'flood') return { layers: [], isLoading: false, districtGeo, austriaGeo, activeDroughtCategories }
 
   const year = animationYear ?? 2024
 
@@ -204,13 +225,18 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
 
   const fillColorFor = (seed: number, centroid: [number, number]): [number, number, number, number] => {
     if (activeLayer === 'drought') {
+      // Professor feedback: "Where you have no drought the area remains
+      // white... use solid colors only where drought exists, everything
+      // else just show the base map" (US Drought Monitor style) — see
+      // droughtThresholdColor, which returns fully transparent below the
+      // "abnormally dry" cutoff instead of always painting every district.
       if (mercViewport) {
         const [screenX] = mercViewport.project(centroid)
         return screenX < splitPixelX
-          ? droughtColor(getDecadeAvg(seed, 1950, 1959))
-          : droughtColor(getDecadeAvg(seed, 2010, 2019))
+          ? droughtThresholdColor(getDecadeAvg(seed, 1950, 1959))
+          : droughtThresholdColor(getDecadeAvg(seed, 2010, 2019))
       }
-      return droughtColor(getDistrictDrought(seed, year))
+      return droughtThresholdColor(getDistrictDrought(seed, year))
     }
     return tempAnomalyColor(getClimateAnomaly(seed, year))
   }
@@ -234,7 +260,18 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     lineWidthMinPixels: 1.5,
     pickable:           true,
     extruded:           false,
-    opacity:            0.78,
+    // On the drought tab, droughtThresholdColor's per-category alpha IS the
+    // intended opacity (including 0 for "no drought, show the basemap") —
+    // an extra 0.78 layer-level multiplier on top would wash every category
+    // out further than the specified values. Climate tab keeps the old
+    // constant multiplier; that wasn't part of this feedback.
+    opacity:            activeLayer === 'drought' ? 1 : 0.78,
+    onClick: activeLayer === 'drought' ? ({ object }: { object?: GeoFeature }) => {
+      if (!object) return
+      const id = object.properties.ID_3 ?? 0
+      const name = object.properties.NAME_3 ?? String(id)
+      useAppStore.getState().setSelectedDistrict({ id, name })
+    } : undefined,
     updateTriggers: {
       getFillColor: [activeLayer, animationYear, districtGeo.length, splitMode, splitX, viewport?.viewState],
       getLineColor: [activeLayer, showHotspots, bavariaHotspots],
@@ -270,7 +307,13 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     lineWidthMinPixels: 1.5,
     pickable:  true,
     extruded:  false,
-    opacity:   0.65,
+    opacity:   activeLayer === 'drought' ? 1 : 0.65,
+    onClick: activeLayer === 'drought' ? ({ object }: { object?: AustriaFeature }) => {
+      if (!object) return
+      const id = austriaSeed(object)
+      const name = object.properties.name ?? String(id)
+      useAppStore.getState().setSelectedDistrict({ id, name })
+    } : undefined,
     updateTriggers: {
       getFillColor: [activeLayer, animationYear, austriaGeo.length, splitMode, splitX, viewport?.viewState],
       getLineColor: [activeLayer, showHotspots, austriaHotspots],
@@ -316,5 +359,5 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     }))
   }
 
-  return { layers, isLoading }
+  return { layers, isLoading, districtGeo, austriaGeo, activeDroughtCategories }
 }
