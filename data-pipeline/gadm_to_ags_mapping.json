@@ -1,0 +1,869 @@
+{
+  "matched": [
+    {
+      "ID_3": 45,
+      "NAME_3": "Ansbach Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09561",
+      "VG250_GEN": "Ansbach",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 46,
+      "NAME_3": "Ansbach",
+      "TYPE_3": "Landkreise",
+      "AGS": "09571",
+      "VG250_GEN": "Ansbach",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 47,
+      "NAME_3": "Erlangen-Höchstadt",
+      "TYPE_3": "Landkreise",
+      "AGS": "09572",
+      "VG250_GEN": "Erlangen-Höchstadt",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 48,
+      "NAME_3": "Erlangen Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09562",
+      "VG250_GEN": "Erlangen",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 49,
+      "NAME_3": "Fürth Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09563",
+      "VG250_GEN": "Fürth",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 50,
+      "NAME_3": "Fürth",
+      "TYPE_3": "Landkreise",
+      "AGS": "09573",
+      "VG250_GEN": "Fürth",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 51,
+      "NAME_3": "Neustadt-Bad Windsheim",
+      "TYPE_3": "Landkreise",
+      "AGS": "09575",
+      "VG250_GEN": "Neustadt a.d.Aisch-Bad Windsheim",
+      "VG250_BEZ": "Landkreis",
+      "match": "manual (resolved by elimination)"
+    },
+    {
+      "ID_3": 52,
+      "NAME_3": "Nuremberg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09564",
+      "VG250_GEN": "Nürnberg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 53,
+      "NAME_3": "Nürnberger Land",
+      "TYPE_3": "Landkreise",
+      "AGS": "09574",
+      "VG250_GEN": "Nürnberger Land",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 54,
+      "NAME_3": "Roth",
+      "TYPE_3": "Landkreise",
+      "AGS": "09576",
+      "VG250_GEN": "Roth",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 55,
+      "NAME_3": "Schwabach Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09565",
+      "VG250_GEN": "Schwabach",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 56,
+      "NAME_3": "Weißenburg-Gunzenhausen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09577",
+      "VG250_GEN": "Weißenburg-Gunzenhausen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 57,
+      "NAME_3": "Deggendorf",
+      "TYPE_3": "Landkreise",
+      "AGS": "09271",
+      "VG250_GEN": "Deggendorf",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 58,
+      "NAME_3": "Dingolfing-Landau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09279",
+      "VG250_GEN": "Dingolfing-Landau",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 59,
+      "NAME_3": "Freyung-Grafenau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09272",
+      "VG250_GEN": "Freyung-Grafenau",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 60,
+      "NAME_3": "Kelheim",
+      "TYPE_3": "Landkreise",
+      "AGS": "09273",
+      "VG250_GEN": "Kelheim",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 61,
+      "NAME_3": "Landshut Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09261",
+      "VG250_GEN": "Landshut",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 62,
+      "NAME_3": "Landshut",
+      "TYPE_3": "Landkreise",
+      "AGS": "09274",
+      "VG250_GEN": "Landshut",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 63,
+      "NAME_3": "Passau Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09262",
+      "VG250_GEN": "Passau",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 64,
+      "NAME_3": "Passau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09275",
+      "VG250_GEN": "Passau",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 65,
+      "NAME_3": "Regen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09276",
+      "VG250_GEN": "Regen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 66,
+      "NAME_3": "Rottal-Inn",
+      "TYPE_3": "Landkreise",
+      "AGS": "09277",
+      "VG250_GEN": "Rottal-Inn",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 67,
+      "NAME_3": "Straubing-Bogen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09278",
+      "VG250_GEN": "Straubing-Bogen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 68,
+      "NAME_3": "Straubing Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09263",
+      "VG250_GEN": "Straubing",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 69,
+      "NAME_3": "Altötting",
+      "TYPE_3": "Landkreise",
+      "AGS": "09171",
+      "VG250_GEN": "Altötting",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 70,
+      "NAME_3": "Bad Tölz-Wolfratshausen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09173",
+      "VG250_GEN": "Bad Tölz-Wolfratshausen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 71,
+      "NAME_3": "Berchtesgadener Land",
+      "TYPE_3": "Landkreise",
+      "AGS": "09172",
+      "VG250_GEN": "Berchtesgadener Land",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 72,
+      "NAME_3": "Dachau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09174",
+      "VG250_GEN": "Dachau",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 73,
+      "NAME_3": "Ebersberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09175",
+      "VG250_GEN": "Ebersberg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 74,
+      "NAME_3": "Eichstätt",
+      "TYPE_3": "Landkreise",
+      "AGS": "09176",
+      "VG250_GEN": "Eichstätt",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 75,
+      "NAME_3": "Erding",
+      "TYPE_3": "Landkreise",
+      "AGS": "09177",
+      "VG250_GEN": "Erding",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 76,
+      "NAME_3": "Freising",
+      "TYPE_3": "Landkreise",
+      "AGS": "09178",
+      "VG250_GEN": "Freising",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 77,
+      "NAME_3": "Fürstenfeldbruck",
+      "TYPE_3": "Landkreise",
+      "AGS": "09179",
+      "VG250_GEN": "Fürstenfeldbruck",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 78,
+      "NAME_3": "Garmisch-Partenkirchen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09180",
+      "VG250_GEN": "Garmisch-Partenkirchen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 79,
+      "NAME_3": "Ingolstadt Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09161",
+      "VG250_GEN": "Ingolstadt",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 80,
+      "NAME_3": "Landsberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09181",
+      "VG250_GEN": "Landsberg am Lech",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 81,
+      "NAME_3": "Miesbach",
+      "TYPE_3": "Landkreise",
+      "AGS": "09182",
+      "VG250_GEN": "Miesbach",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 82,
+      "NAME_3": "Mühldorf",
+      "TYPE_3": "Landkreise",
+      "AGS": "09183",
+      "VG250_GEN": "Mühldorf a.Inn",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 83,
+      "NAME_3": "München",
+      "TYPE_3": "Landkreise",
+      "AGS": "09184",
+      "VG250_GEN": "München",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 84,
+      "NAME_3": "Munich Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09162",
+      "VG250_GEN": "München",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 85,
+      "NAME_3": "Neuburg-Schrobenhausen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09185",
+      "VG250_GEN": "Neuburg-Schrobenhausen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 86,
+      "NAME_3": "Pfaffenhofen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09186",
+      "VG250_GEN": "Pfaffenhofen a.d.Ilm",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 87,
+      "NAME_3": "Rosenheim Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09163",
+      "VG250_GEN": "Rosenheim",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 88,
+      "NAME_3": "Rosenheim",
+      "TYPE_3": "Landkreise",
+      "AGS": "09187",
+      "VG250_GEN": "Rosenheim",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 89,
+      "NAME_3": "Starnberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09188",
+      "VG250_GEN": "Starnberg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 90,
+      "NAME_3": "Traunstein",
+      "TYPE_3": "Landkreise",
+      "AGS": "09189",
+      "VG250_GEN": "Traunstein",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 91,
+      "NAME_3": "Weilheim-Schongau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09190",
+      "VG250_GEN": "Weilheim-Schongau",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 92,
+      "NAME_3": "Bamberg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09461",
+      "VG250_GEN": "Bamberg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 93,
+      "NAME_3": "Bamberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09471",
+      "VG250_GEN": "Bamberg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 94,
+      "NAME_3": "Bayreuth Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09462",
+      "VG250_GEN": "Bayreuth",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 95,
+      "NAME_3": "Bayreuth",
+      "TYPE_3": "Landkreise",
+      "AGS": "09472",
+      "VG250_GEN": "Bayreuth",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 96,
+      "NAME_3": "Coburg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09463",
+      "VG250_GEN": "Coburg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 97,
+      "NAME_3": "Coburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09473",
+      "VG250_GEN": "Coburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 98,
+      "NAME_3": "Forchheim",
+      "TYPE_3": "Landkreise",
+      "AGS": "09474",
+      "VG250_GEN": "Forchheim",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 99,
+      "NAME_3": "Hof Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09464",
+      "VG250_GEN": "Hof",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 100,
+      "NAME_3": "Hof",
+      "TYPE_3": "Landkreise",
+      "AGS": "09475",
+      "VG250_GEN": "Hof",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 101,
+      "NAME_3": "Kronach",
+      "TYPE_3": "Landkreise",
+      "AGS": "09476",
+      "VG250_GEN": "Kronach",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 102,
+      "NAME_3": "Kulmbach",
+      "TYPE_3": "Landkreise",
+      "AGS": "09477",
+      "VG250_GEN": "Kulmbach",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 103,
+      "NAME_3": "Lichtenfels",
+      "TYPE_3": "Landkreise",
+      "AGS": "09478",
+      "VG250_GEN": "Lichtenfels",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 104,
+      "NAME_3": "Wunsiedel",
+      "TYPE_3": "Landkreise",
+      "AGS": "09479",
+      "VG250_GEN": "Wunsiedel i.Fichtelgebirge",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 105,
+      "NAME_3": "Amberg-Sulzbach",
+      "TYPE_3": "Landkreise",
+      "AGS": "09371",
+      "VG250_GEN": "Amberg-Sulzbach",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 106,
+      "NAME_3": "Amberg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09361",
+      "VG250_GEN": "Amberg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 107,
+      "NAME_3": "Cham",
+      "TYPE_3": "Landkreise",
+      "AGS": "09372",
+      "VG250_GEN": "Cham",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 108,
+      "NAME_3": "Neumarkt",
+      "TYPE_3": "Landkreise",
+      "AGS": "09373",
+      "VG250_GEN": "Neumarkt i.d.OPf.",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 109,
+      "NAME_3": "Neustadt",
+      "TYPE_3": "Landkreise",
+      "AGS": "09374",
+      "VG250_GEN": "Neustadt a.d.Waldnaab",
+      "VG250_BEZ": "Landkreis",
+      "match": "manual (resolved by elimination)"
+    },
+    {
+      "ID_3": 110,
+      "NAME_3": "Regensburg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09362",
+      "VG250_GEN": "Regensburg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 111,
+      "NAME_3": "Regensburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09375",
+      "VG250_GEN": "Regensburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 112,
+      "NAME_3": "Schwandorf",
+      "TYPE_3": "Landkreise",
+      "AGS": "09376",
+      "VG250_GEN": "Schwandorf",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 113,
+      "NAME_3": "Tirschenreuth",
+      "TYPE_3": "Landkreise",
+      "AGS": "09377",
+      "VG250_GEN": "Tirschenreuth",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 114,
+      "NAME_3": "Weiden Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09363",
+      "VG250_GEN": "Weiden i.d.OPf.",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 115,
+      "NAME_3": "Aichach-Friedberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09771",
+      "VG250_GEN": "Aichach-Friedberg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 116,
+      "NAME_3": "Augsburg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09761",
+      "VG250_GEN": "Augsburg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 117,
+      "NAME_3": "Augsburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09772",
+      "VG250_GEN": "Augsburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 118,
+      "NAME_3": "Dillingen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09773",
+      "VG250_GEN": "Dillingen a.d.Donau",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 119,
+      "NAME_3": "Donau-Ries",
+      "TYPE_3": "Landkreise",
+      "AGS": "09779",
+      "VG250_GEN": "Donau-Ries",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 120,
+      "NAME_3": "Günzburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09774",
+      "VG250_GEN": "Günzburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 121,
+      "NAME_3": "Kaufbeuren Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09762",
+      "VG250_GEN": "Kaufbeuren",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 122,
+      "NAME_3": "Kempten Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09763",
+      "VG250_GEN": "Kempten (Allgäu)",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 123,
+      "NAME_3": "Lindau",
+      "TYPE_3": "Landkreise",
+      "AGS": "09776",
+      "VG250_GEN": "Lindau (Bodensee)",
+      "VG250_BEZ": "Landkreis",
+      "match": "prefix"
+    },
+    {
+      "ID_3": 124,
+      "NAME_3": "Memmingen Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09764",
+      "VG250_GEN": "Memmingen",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 125,
+      "NAME_3": "Neu-Ulm",
+      "TYPE_3": "Landkreise",
+      "AGS": "09775",
+      "VG250_GEN": "Neu-Ulm",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 126,
+      "NAME_3": "Oberallgäu",
+      "TYPE_3": "Landkreise",
+      "AGS": "09780",
+      "VG250_GEN": "Oberallgäu",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 127,
+      "NAME_3": "Ostallgäu",
+      "TYPE_3": "Landkreise",
+      "AGS": "09777",
+      "VG250_GEN": "Ostallgäu",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 128,
+      "NAME_3": "Unterallgäu",
+      "TYPE_3": "Landkreise",
+      "AGS": "09778",
+      "VG250_GEN": "Unterallgäu",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 129,
+      "NAME_3": "Aschaffenburg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09661",
+      "VG250_GEN": "Aschaffenburg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 130,
+      "NAME_3": "Aschaffenburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09671",
+      "VG250_GEN": "Aschaffenburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 131,
+      "NAME_3": "Bad Kissingen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09672",
+      "VG250_GEN": "Bad Kissingen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 132,
+      "NAME_3": "Haßberge",
+      "TYPE_3": "Landkreise",
+      "AGS": "09674",
+      "VG250_GEN": "Haßberge",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 133,
+      "NAME_3": "Kitzingen",
+      "TYPE_3": "Landkreise",
+      "AGS": "09675",
+      "VG250_GEN": "Kitzingen",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 134,
+      "NAME_3": "Main-Spessart",
+      "TYPE_3": "Landkreise",
+      "AGS": "09677",
+      "VG250_GEN": "Main-Spessart",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 135,
+      "NAME_3": "Miltenberg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09676",
+      "VG250_GEN": "Miltenberg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 136,
+      "NAME_3": "Rhön-Grabfeld",
+      "TYPE_3": "Landkreise",
+      "AGS": "09673",
+      "VG250_GEN": "Rhön-Grabfeld",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 137,
+      "NAME_3": "Schweinfurt Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09662",
+      "VG250_GEN": "Schweinfurt",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 138,
+      "NAME_3": "Schweinfurt",
+      "TYPE_3": "Landkreise",
+      "AGS": "09678",
+      "VG250_GEN": "Schweinfurt",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    },
+    {
+      "ID_3": 139,
+      "NAME_3": "Würzburg Städte",
+      "TYPE_3": "Kreisfreie Städte",
+      "AGS": "09663",
+      "VG250_GEN": "Würzburg",
+      "VG250_BEZ": "Kreisfreie Stadt",
+      "match": "exact"
+    },
+    {
+      "ID_3": 140,
+      "NAME_3": "Würzburg",
+      "TYPE_3": "Landkreise",
+      "AGS": "09679",
+      "VG250_GEN": "Würzburg",
+      "VG250_BEZ": "Landkreis",
+      "match": "exact"
+    }
+  ],
+  "unmatched": []
+}

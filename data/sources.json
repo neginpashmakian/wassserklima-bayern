@@ -1,0 +1,39 @@
+{
+  "_comment": "One entry per real data source used in the pipeline. Appended to as each phase downloads something — do not hand-edit the auto-filled fields (sha256, downloadDate) without re-running the download.",
+  "sources": [
+    {
+      "id": "bkg-vg250-krs",
+      "name": "VG250 Verwaltungsgebiete 1:250 000 — Kreise (districts)",
+      "provider": "Bundesamt für Kartographie und Geodäsie (BKG)",
+      "url": "https://daten.gdz.bkg.bund.de/produkte/vg/vg250_ebenen_0101/aktuell/vg250_01-01.utm32s.shape.ebenen.zip",
+      "license": "dl-de/by-2-0",
+      "attribution": "© GeoBasis-DE / BKG 2026 (dl-de/by-2-0)",
+      "version": "Stand 01.01. (aktuell, downloaded 2026-11-08)",
+      "periodCovered": "current administrative boundaries (not historical)",
+      "variables": ["district polygon geometry", "AGS (Amtlicher Gemeindeschlüssel)", "GEN (name)", "BEZ (Kreisfreie Stadt / Landkreis)"],
+      "downloadDate": "2026-11-08",
+      "rawFile": "data/raw/bkg/vg250_01-01.utm32s.shape.ebenen.zip",
+      "sha256": "a21bd17e3616fded6a1cae3311f6b0e8f156ba3939d113b8b760fec5664dd529",
+      "sizeBytes": 67421062,
+      "processedOutput": "public/data/bavaria-districts.vg250.geo.json",
+      "processingNotes": "Filtered to AGS starting '09' (Bavaria, 96 districts), reprojected EPSG:25832 -> EPSG:4326, simplified (tolerance 0.005°, preserve_topology=True) for web use."
+    },
+    {
+      "id": "austria-bezirke-ginseng666",
+      "name": "Austria Bezirke (district) boundaries, 2021, simplified 99.5%",
+      "provider": "Flooh Perlot (processed), original data Statistik Austria",
+      "url": "https://raw.githubusercontent.com/ginseng666/GeoJSON-TopoJSON-Austria/master/2021/simplified-99.5/bezirke_995_geo.json",
+      "license": "CC BY 4.0",
+      "attribution": "Flooh Perlot / Statistik Austria (data.statistik.gv.at), CC BY 4.0",
+      "version": "2021",
+      "periodCovered": "current administrative boundaries (not historical)",
+      "variables": ["district polygon geometry", "name", "iso (district code)"],
+      "downloadDate": "2026-11-08",
+      "rawFile": "data/raw/austria/bezirke_995_geo.json",
+      "sha256": "b1a462a3db13e1709e198c28ae45c5d102aa7b849a231090939ce667f4fdd289",
+      "sizeBytes": 416768,
+      "processedOutput": "not yet processed — archived raw only in Phase 2; app still fetches live from GitHub until the switch is made",
+      "processingNotes": "117 features (all Austrian districts, not pre-filtered to Upper Austria). Previously fetched live at runtime from this same URL in BavariaHeatmap.tsx (AUSTRIA_DISTRICTS_URL) — now archived locally; app code not yet switched over."
+    }
+  ]
+}

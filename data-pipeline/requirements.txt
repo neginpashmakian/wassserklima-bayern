@@ -1,0 +1,13 @@
+geopandas==1.0.1
+shapely==2.0.6
+pyproj==3.7.0
+xarray==2024.10.0
+netCDF4==1.7.2
+rioxarray==0.18.1
+rasterio==1.4.1
+rasterstats==0.20.0
+climate-indices==2.2.0
+pandas==2.2.3
+numpy==2.1.3
+wetterdienst==0.106.0
+requests==2.32.3
