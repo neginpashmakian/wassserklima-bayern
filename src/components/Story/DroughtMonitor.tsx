@@ -42,6 +42,7 @@ export default function DroughtMonitor({ transparent = false }: { transparent?: 
   const hoveredYear   = useAppStore(state => state.hoveredYear)
   const startYear     = useAppStore(state => state.startYear)
   const currentYear   = useAppStore(state => state.currentYear)
+  const animationYear = useAppStore(state => state.animationYear)
 
   // Own instance of flood data, same pattern as FloodDashboard.tsx — needed
   // to check drought↔flood correlation against whatever the flood chart is
@@ -142,6 +143,7 @@ export default function DroughtMonitor({ transparent = false }: { transparent?: 
       .attr('fill', d => droughtHex(Math.max(0, d.droughtIndex)))
       .attr('opacity', isDecade ? 0.5 : 0.85)
       .attr('rx', 1)
+      .style('cursor', 'pointer')
 
     // Dashed top border in decade stage — PDAV uncertainty encoding
     if (isDecade) {
@@ -191,6 +193,11 @@ export default function DroughtMonitor({ transparent = false }: { transparent?: 
       useAppStore.getState().setCorrelationHighlight(null)
       useAppStore.getState().setCorrelationTrigger(null)
       setInsight(null)
+    })
+    .on('click', (_, d) => {
+      // Feature 2: clicking a bar drives the map — cascades into
+      // BavariaMap.tsx's choropleth via the shared animationYear field.
+      useAppStore.getState().setAnimationYear(d.year)
     })
 
     // X axis
@@ -260,6 +267,54 @@ export default function DroughtMonitor({ transparent = false }: { transparent?: 
       .attr('pointer-events', 'none')
 
   }, [hoveredYear, displayData, containerWidth, startYear, currentYear,
+      MARGIN.left, MARGIN.top, MARGIN.right, MARGIN.bottom])
+
+  // Persistent animationYear marker — separate from the ephemeral hover
+  // crosshair above so dragging the map's year slider only redraws this one
+  // line+label, not all ~75 bars in the main draw effect (which does NOT
+  // depend on animationYear, by design).
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || displayData.length === 0 || containerWidth === 0) return
+
+    const visibleData = displayData.filter(d => d.year >= startYear && d.year <= currentYear)
+
+    const innerW = containerWidth - MARGIN.left - MARGIN.right
+    const innerH = HEIGHT - MARGIN.top - MARGIN.bottom
+
+    const x = d3.scaleBand()
+      .domain(visibleData.map(d => d.year.toString()))
+      .range([0, innerW])
+      .padding(0.12)
+
+    const g = d3.select(svg).select<SVGGElement>('g.main-g')
+    g.selectAll('.year-marker-line, .year-marker-label').remove()
+
+    if (animationYear === null) return
+    const entry = visibleData.find(d => d.year === animationYear)
+    if (!entry) return
+
+    const xPos = (x(animationYear.toString()) ?? 0) + x.bandwidth() / 2
+
+    g.append('line')
+      .attr('class', 'year-marker-line')
+      .attr('x1', xPos).attr('x2', xPos)
+      .attr('y1', 0).attr('y2', innerH)
+      .attr('stroke', '#FFFFFF')
+      .attr('stroke-width', 1.5)
+      .attr('pointer-events', 'none')
+
+    g.append('text')
+      .attr('class', 'year-marker-label')
+      .attr('x', xPos).attr('y', innerH + 18)
+      .attr('text-anchor', 'middle')
+      .text(animationYear.toString())
+      .style('fill', '#FFFFFF')
+      .style('font-size', '9px')
+      .style('font-weight', '600')
+      .attr('pointer-events', 'none')
+
+  }, [animationYear, displayData, containerWidth, startYear, currentYear,
       MARGIN.left, MARGIN.top, MARGIN.right, MARGIN.bottom])
 
   const visibleData = displayData.filter(d => d.year >= startYear && d.year <= currentYear)

@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Data pipeline — large raw downloads are not committed; see data/sources.json
+# for URL/size/SHA256 of every file so they can be re-downloaded exactly.
+data/raw/
+data-pipeline/venv/

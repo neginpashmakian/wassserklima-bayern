@@ -3,7 +3,7 @@ import { PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { WebMercatorViewport } from '@deck.gl/core'
 import type { Layer, MapViewState } from '@deck.gl/core'
 import { useAppStore } from '../../store/useAppStore'
-import { tempAnomalyColor, droughtColor } from '../../utils/colorScales'
+import { tempAnomalyColor, droughtThresholdColor, droughtThresholdCategory, NO_DATA_FILL_COLOR, NO_DATA_LABEL } from '../../utils/colorScales'
 
 // Pre-filtered Bavaria-only GeoJSON bundled in public/. Properties: NAME_3 (district name),
 // ID_3 (integer district ID), NAME_2 (Regierungsbezirk), ID_1=2 (Bayern state code).
@@ -36,7 +36,7 @@ function isUpperAustria(f: AustriaFeature): boolean {
   return (f.properties.iso ?? '').startsWith('4')
 }
 
-function austriaSeed(f: AustriaFeature): number {
+export function austriaSeed(f: AustriaFeature): number {
   return parseInt(f.properties.iso ?? '0', 10) || 0
 }
 
@@ -50,84 +50,176 @@ function ringCentroid(ring: number[][]): [number, number] {
   return [sx / n, sy / n]
 }
 
-// Deterministic time-varying drought index seeded from district ID_3.
-// Recalibrated so 1950s and 2010s decade averages land in genuinely
-// different visual bands (verified: 1950s ~0.18-0.38, 2010s ~0.60-0.80,
-// gap ~0.41-0.43 across the real ID_3 range 45-140) — the previous
-// base (0.3-0.78) and trend (×0.25) never let 1950s read as light
-// tan/beige, so the split-map comparison looked like two shades of the
-// same brown instead of a dramatic before/after.
-export function getDistrictDrought(id3: number, year: number): number {
-  const base  = 0.20 + (id3 % 7) * 0.025
-  const trend = (year - 1950) / 74 * 0.45
-  const noise = ((id3 * year) % 17) / 170 - 0.05
-  let val     = base + trend + noise
-  if (year === 2018 || year === 2019 || year === 2022) val += 0.28
-  if (year === 2003) val += 0.22
-  if (year === 1965 || year === 1966 || year === 2002) val -= 0.15
-  return Math.max(0, Math.min(1, val))
+// ─── Real climate data (Phase 3) ───────────────────────────────────────────
+// Replaces the deterministic id3/year formulas that used to live here.
+// Backing data: public/data/districts-climate.json (Bavaria, HYRAS-DE v6-1
+// tas/pr + DWD hot_days grids, 1951-2024) and
+// public/data/austria-districts-climate.json (Upper Austria, GeoSphere
+// SPARTACUS v2.1, 1961-2024 only — SPARTACUS has no 1951-1960 coverage, so
+// those years are simply absent from the JSON rather than filled or zeroed).
+// Both are keyed by the same `seed` value already used throughout this file:
+// Bavaria via the GADM ID_3 → AGS mapping, Austria directly by iso (401-418).
+const DISTRICT_CLIMATE_URL = '/data/districts-climate.json'
+const AUSTRIA_CLIMATE_URL  = '/data/austria-districts-climate.json'
+const ID3_TO_AGS_URL       = '/data/gadm-id3-to-ags.json'
+
+interface DistrictYearClimate {
+  tasMean:      number | null
+  tasAnomaly:   number | null
+  prSum:        number | null
+  spi12:        number | null
+  spi3Summer:   number | null
+  droughtClass: string | null
+  hotDays:      number | null
+}
+interface DistrictClimateRecord {
+  name:   string
+  yearly: Record<string, DistrictYearClimate>
 }
 
-export function getDecadeAvg(id3: number, startY: number, endY: number): number {
-  let sum = 0
-  for (let y = startY; y <= endY; y++) sum += getDistrictDrought(id3, y)
-  return sum / (endY - startY + 1)
+let bavariaClimate: Record<string, DistrictClimateRecord> | null = null
+let austriaClimate: Record<string, DistrictClimateRecord> | null = null
+let id3ToAgs: Record<string, string> | null = null
+let climateDataRequested = false
+const climateDataListeners = new Set<() => void>()
+
+// Fire-and-subscribe: safe to call from multiple components (this hook, plus
+// DroughtDistrictPanel/DroughtRanking which import getDistrictDrought etc.
+// directly) — the actual fetch only happens once, every caller's listener
+// gets notified when it resolves so each can re-render with real values.
+function loadClimateData(onReady: () => void): void {
+  climateDataListeners.add(onReady)
+  if (climateDataRequested) return
+  climateDataRequested = true
+  Promise.all([
+    fetch(DISTRICT_CLIMATE_URL).then(r => r.json()),
+    fetch(AUSTRIA_CLIMATE_URL).then(r => r.json()),
+    fetch(ID3_TO_AGS_URL).then(r => r.json()),
+  ]).then(([bav, aus, map]) => {
+    bavariaClimate = bav as Record<string, DistrictClimateRecord>
+    austriaClimate = aus as Record<string, DistrictClimateRecord>
+    id3ToAgs       = map as Record<string, string>
+    climateDataListeners.forEach(fn => fn())
+  }).catch(() => console.warn('Could not load real climate data — drought/climate layers will show no data until it loads'))
 }
 
-// Year-based climate anomaly, piecewise-linear through three checkpoints so
-// scrubbing 1950 → 2024 is visually dramatic: cool/neutral → medium orange →
-// deep red. Per-district spread (from id3) widens as warming progresses.
-const CLIMATE_CHECKPOINTS: [number, number, number][] = [
-  // [yearProgress, midAnomaly, halfSpread]
-  [0,     0.35, 0.15], // 1950 → range +0.20 to +0.50
-  [0.405, 0.9,  0.1],  // 1980 → range +0.80 to +1.00
-  [1,     1.9,  0.3],  // 2024 → range +1.60 to +2.20
+function lookupClimateYear(seed: number, year: number): DistrictYearClimate | null {
+  const yearKey = String(year)
+  if (id3ToAgs && bavariaClimate) {
+    const ags = id3ToAgs[String(seed)]
+    if (ags) return bavariaClimate[ags]?.yearly[yearKey] ?? null
+  }
+  if (seed >= 401 && seed <= 418 && austriaClimate) {
+    return austriaClimate[String(seed)]?.yearly[yearKey] ?? null
+  }
+  return null
+}
+
+// Sentinel for "no real data exists here" (district/year outside coverage —
+// Bavaria 1950, Upper Austria 1950-1960) — NOT the same as "in the data,
+// not in drought". -999 is unreachable by either the 0..1 drought index or
+// any plausible °C anomaly, so `=== NO_DATA` is unambiguous everywhere this
+// is checked. Exported so sibling consumers (DroughtDistrictPanel,
+// DroughtRanking) can recognize it instead of silently averaging it in.
+export const NO_DATA = -999
+
+// Maps real SPI-12 (December value; more negative = drier) onto the same
+// 0..1 "drought index" scale DROUGHT_THRESHOLDS/droughtThresholdColor
+// already expect (left untouched, along with the legend's existing rows) —
+// so real data drives the existing color scale instead of changing it.
+// PIECEWISE (not a single linear fit) so every D-class boundary the Python
+// pipeline uses for droughtClass lands EXACTLY on the corresponding existing
+// UI tier boundary — the D-classes are not evenly spaced in SPI (D0-D1 spans
+// 0.3, D1-D2 spans 0.5, D2-D3 spans 0.3, D3-D4 spans 0.4), so a single linear
+// map can't hit all of them at once:
+//   SPI -0.5 (D0, abnormally dry)   -> 0.32 "Abnormally dry"
+//   SPI -0.8 (D1, moderate)         -> 0.40 "Dry"
+//   SPI -1.3 (D2, severe)           -> 0.47 "Drought"
+//   SPI -1.6 (D3, extreme)          -> 0.54 "Severe"
+//   SPI -2.0 (D4, exceptional)      -> 0.61 "Extreme"
+// There's no further real D-class boundary beyond D4 to anchor "Critical"
+// (0.69) to, so it's reached by continuing the D3->D4 segment's own rate
+// rather than a separately chosen cutoff — works out to SPI ≈ -2.46.
+// Wetter than -0.5 (not in any D-class) always maps to 0, i.e. transparent.
+const SPI_INDEX_BREAKPOINTS: [number, number][] = [
+  [-0.5, 0.32],
+  [-0.8, 0.40],
+  [-1.3, 0.47],
+  [-1.6, 0.54],
+  [-2.0, 0.61],
 ]
 
-export function getClimateAnomaly(id3: number, year: number): number {
-  const yearProgress = Math.max(0, Math.min(1, (year - 1950) / 74))
-  let mid = CLIMATE_CHECKPOINTS[CLIMATE_CHECKPOINTS.length - 1][1]
-  let half = CLIMATE_CHECKPOINTS[CLIMATE_CHECKPOINTS.length - 1][2]
-  for (let i = 0; i < CLIMATE_CHECKPOINTS.length - 1; i++) {
-    const [t0, m0, h0] = CLIMATE_CHECKPOINTS[i]
-    const [t1, m1, h1] = CLIMATE_CHECKPOINTS[i + 1]
-    if (yearProgress <= t1) {
-      const f = (yearProgress - t0) / (t1 - t0)
-      mid = m0 + (m1 - m0) * f
-      half = h0 + (h1 - h0) * f
-      break
+function spiToDroughtIndex(spi12: number | null): number {
+  if (spi12 === null) return 0 // not a missing-data case (that's handled one level up) — just "no drought this year"
+  if (spi12 > SPI_INDEX_BREAKPOINTS[0][0]) return 0 // wetter than D0 — no drought
+  for (let i = 0; i < SPI_INDEX_BREAKPOINTS.length - 1; i++) {
+    const [s0, idx0] = SPI_INDEX_BREAKPOINTS[i]
+    const [s1, idx1] = SPI_INDEX_BREAKPOINTS[i + 1]
+    if (spi12 > s1) {
+      const t = (spi12 - s0) / (s1 - s0)
+      return idx0 + t * (idx1 - idx0)
     }
   }
-  const districtFactor = ((id3 % 10) - 4.5) / 4.5 // -1..1
-  return mid + districtFactor * half
+  const [s0, idx0] = SPI_INDEX_BREAKPOINTS[SPI_INDEX_BREAKPOINTS.length - 2]
+  const [s1, idx1] = SPI_INDEX_BREAKPOINTS[SPI_INDEX_BREAKPOINTS.length - 1]
+  const slope = (idx1 - idx0) / (s1 - s0)
+  return Math.min(1, idx1 + slope * (spi12 - s1))
 }
 
-// Districts in severe drought (>0.65) more than 50% of years 1950–2024,
-// capped to the worst `topK`. A plain >50% threshold alone doesn't work on
-// this dataset: the underlying model only has 7 distinct severity tiers
-// (from `id3 % 7`), each shared by a whole cluster of ~14 districts, so
-// >50%-of-years crosses whole clusters at once — verified empirically to
-// flag 55 of 96 Bavaria districts, not the intended handful. Those clusters
-// also tie exactly on every finer metric tried (mean value, etc.), since
-// districts sharing a residue really are simulated identically apart from
-// noise that averages out over 75 years. `seed` is used purely as a stable
-// tiebreaker for which representative few get shown — it does not imply
-// those specific districts are more severe than their tied peers.
-function computeHotspots(seeds: number[], topK: number, minPct = 0.50): Map<number, number> {
+export function getDistrictDrought(id3: number, year: number): number {
+  const rec = lookupClimateYear(id3, year)
+  if (rec === null) return NO_DATA // this district/year has no real coverage at all
+  return spiToDroughtIndex(rec.spi12)
+}
+
+// Averages only over years with real data (e.g. a 1950-1959 "decade" against
+// Bavaria's 1951-2024 coverage has 9 real years, not 10) rather than
+// dividing by a fixed decade length — a missing year must not silently pull
+// the average toward "no drought". If NO year in range has data (Upper
+// Austria's 1950s), returns NO_DATA rather than 0.
+export function getDecadeAvg(id3: number, startY: number, endY: number): number {
+  let sum = 0
+  let n = 0
+  for (let y = startY; y <= endY; y++) {
+    const spi12 = lookupClimateYear(id3, y)?.spi12
+    if (spi12 == null) continue
+    sum += spiToDroughtIndex(spi12)
+    n++
+  }
+  return n > 0 ? sum / n : NO_DATA
+}
+
+// Real temperature anomaly (°C vs. the 1961-1990 baseline), already in the
+// exact units tempAnomalyColor expects — no transform needed here, unlike
+// the drought index above.
+export function getClimateAnomaly(id3: number, year: number): number {
+  const rec = lookupClimateYear(id3, year)
+  return rec === null ? NO_DATA : (rec.tasAnomaly ?? NO_DATA)
+}
+
+// Districts flagged as hotspots: ranked by how often they cross the same
+// "abnormally dry" visual threshold used above (idx > 0.32, i.e. SPI ≤ -0.5
+// that year), capped to the worst `topK`. Recalibrated against the REAL SPI
+// distribution (verified directly, same discipline as the original
+// recalibration note this replaced): no Bavaria district is ever in at
+// least D0 drought more than 50% of years 1951-2024 — the old synthetic
+// generator's ">50% of years" floor is unreachable with real climate data
+// (real max across all 96 districts is 50.0% exactly, by Kaufbeuren), so
+// `minPct` is lowered to 0.30, comfortably below the top 5-10 districts'
+// real values (0.35-0.50) and well above the Bavaria-wide mean (0.30) —
+// `topK`, not `minPct`, is what actually bounds the result in practice, as
+// originally intended. NO_DATA years never count as severe (-999 is always
+// below the threshold), so missing coverage can only ever lower a district's
+// ranking, never inflate it.
+const HOTSPOT_SEVERITY_CUTOFF = SPI_INDEX_BREAKPOINTS[0][1] // 0.32 — D0 "abnormally dry"
+function computeHotspots(seeds: number[], topK: number, minPct = 0.30): Map<number, number> {
   const totalYears = 2024 - 1950 + 1
-  // Severity cutoff lowered from 0.65 to 0.55 to match the recalibrated
-  // getDistrictDrought range above (FIX 1) — with the old, higher-baseline
-  // formula 0.65 was reasonable, but against the new lower-baseline values
-  // nothing cleared it at all, leaving zero hotspots.
   const scored = seeds.map(seed => {
     let severeCount = 0
     for (let y = 1950; y <= 2024; y++) {
-      if (getDistrictDrought(seed, y) > 0.55) severeCount++
+      if (getDistrictDrought(seed, y) > HOTSPOT_SEVERITY_CUTOFF) severeCount++
     }
-    // Defensive cap: no single district should ever display as a flat 100%
-    // hotspot (reads as a bug, not a real value) even if its seed happens
-    // to land on the harshest residue class.
-    return { seed, pct: Math.min(severeCount / totalYears, 0.85) }
+    return { seed, pct: severeCount / totalYears }
   })
   scored.sort((a, b) => b.pct - a.pct || a.seed - b.seed)
   const result = new Map<number, number>()
@@ -145,8 +237,11 @@ export interface MapViewport {
 }
 
 export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
-  layers:    Layer[]
-  isLoading: boolean
+  layers:      Layer[]
+  isLoading:   boolean
+  districtGeo: GeoFeature[]
+  austriaGeo:  AustriaFeature[]
+  activeDroughtCategories: Set<string>
 } {
   const activeLayer  = useAppStore(state => state.activeLayer)
   const animationYear = useAppStore(state => state.animationYear)
@@ -155,12 +250,21 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
   const showHotspots  = useAppStore(state => state.showHotspots)
   const [districtGeo, setDistrictGeo] = useState<GeoFeature[]>([])
   const [austriaGeo,  setAustriaGeo]  = useState<AustriaFeature[]>([])
+  const [climateDataVersion, setClimateDataVersion] = useState(0)
 
   useEffect(() => {
     fetch(DISTRICTS_URL)
       .then(r => r.json())
       .then((data: { features: GeoFeature[] }) => setDistrictGeo(data.features))
       .catch(() => console.warn('Could not load bavaria-districts.geo.json from public/'))
+  }, [])
+
+  // Real climate data loads independently of the district/Austria GeoJSON
+  // above and arrives later — bump a version counter so this hook (and the
+  // sibling panels that import getDistrictDrought/getClimateAnomaly
+  // directly) re-render with real values once it's ready.
+  useEffect(() => {
+    loadClimateData(() => setClimateDataVersion(v => v + 1))
   }, [])
 
   useEffect(() => {
@@ -176,18 +280,39 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
   // codes are both small integers and could otherwise collide. Split 5/1
   // between the two datasets so the combined map shows ~6 hotspots total,
   // proportionate to Bavaria's 96 districts vs. Austria's 18.
-  const bavariaHotspots = useMemo(
-    () => computeHotspots(districtGeo.map(f => f.properties.ID_3 ?? 0), 5),
-    [districtGeo],
-  )
-  const austriaHotspots = useMemo(
-    () => computeHotspots(austriaGeo.map(austriaSeed), 1),
-    [austriaGeo],
-  )
+  const bavariaHotspots = useMemo(() => {
+    void climateDataVersion // computeHotspots reads the real-data module cache, not this value directly — re-run once it loads
+    return computeHotspots(districtGeo.map(f => f.properties.ID_3 ?? 0), 5)
+  }, [districtGeo, climateDataVersion])
+  const austriaHotspots = useMemo(() => {
+    void climateDataVersion
+    return computeHotspots(austriaGeo.map(austriaSeed), 1)
+  }, [austriaGeo, climateDataVersion])
 
   const isLoading = districtGeo.length === 0
 
-  if (activeLayer === 'flood') return { layers: [], isLoading: false }
+  // Which drought categories actually appear on screen this year — so the
+  // legend can skip rows for categories nothing currently matches (e.g.
+  // "Critical" in a mild year), rather than always listing all six.
+  const activeDroughtCategories = useMemo(() => {
+    void climateDataVersion // re-run once real climate data loads, same reasoning as above
+    if (activeLayer !== 'drought') return new Set<string>()
+    const y = animationYear ?? 2024
+    const cats = new Set<string>()
+    districtGeo.forEach(f => {
+      const val = getDistrictDrought(f.properties.ID_3 ?? 0, y)
+      const cat = val === NO_DATA ? NO_DATA_LABEL : droughtThresholdCategory(val)
+      if (cat) cats.add(cat)
+    })
+    austriaGeo.forEach(f => {
+      const val = getDistrictDrought(austriaSeed(f), y)
+      const cat = val === NO_DATA ? NO_DATA_LABEL : droughtThresholdCategory(val)
+      if (cat) cats.add(cat)
+    })
+    return cats
+  }, [activeLayer, districtGeo, austriaGeo, animationYear, climateDataVersion])
+
+  if (activeLayer === 'flood') return { layers: [], isLoading: false, districtGeo, austriaGeo, activeDroughtCategories }
 
   const year = animationYear ?? 2024
 
@@ -204,15 +329,23 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
 
   const fillColorFor = (seed: number, centroid: [number, number]): [number, number, number, number] => {
     if (activeLayer === 'drought') {
+      // Professor feedback: "Where you have no drought the area remains
+      // white... use solid colors only where drought exists, everything
+      // else just show the base map" (US Drought Monitor style) — see
+      // droughtThresholdColor, which returns fully transparent below the
+      // "abnormally dry" cutoff instead of always painting every district.
       if (mercViewport) {
         const [screenX] = mercViewport.project(centroid)
-        return screenX < splitPixelX
-          ? droughtColor(getDecadeAvg(seed, 1950, 1959))
-          : droughtColor(getDecadeAvg(seed, 2010, 2019))
+        const val = screenX < splitPixelX
+          ? getDecadeAvg(seed, 1950, 1959)
+          : getDecadeAvg(seed, 2010, 2019)
+        return val === NO_DATA ? NO_DATA_FILL_COLOR : droughtThresholdColor(val)
       }
-      return droughtColor(getDistrictDrought(seed, year))
+      const val = getDistrictDrought(seed, year)
+      return val === NO_DATA ? NO_DATA_FILL_COLOR : droughtThresholdColor(val)
     }
-    return tempAnomalyColor(getClimateAnomaly(seed, year))
+    const anomaly = getClimateAnomaly(seed, year)
+    return anomaly === NO_DATA ? NO_DATA_FILL_COLOR : tempAnomalyColor(anomaly)
   }
 
   const bavariaLayer = new PolygonLayer<GeoFeature>({
@@ -234,9 +367,20 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     lineWidthMinPixels: 1.5,
     pickable:           true,
     extruded:           false,
-    opacity:            0.78,
+    // On the drought tab, droughtThresholdColor's per-category alpha IS the
+    // intended opacity (including 0 for "no drought, show the basemap") —
+    // an extra 0.78 layer-level multiplier on top would wash every category
+    // out further than the specified values. Climate tab keeps the old
+    // constant multiplier; that wasn't part of this feedback.
+    opacity:            activeLayer === 'drought' ? 1 : 0.78,
+    onClick: activeLayer === 'drought' ? ({ object }: { object?: GeoFeature }) => {
+      if (!object) return
+      const id = object.properties.ID_3 ?? 0
+      const name = object.properties.NAME_3 ?? String(id)
+      useAppStore.getState().setSelectedDistrict({ id, name })
+    } : undefined,
     updateTriggers: {
-      getFillColor: [activeLayer, animationYear, districtGeo.length, splitMode, splitX, viewport?.viewState],
+      getFillColor: [activeLayer, animationYear, districtGeo.length, splitMode, splitX, viewport?.viewState, climateDataVersion],
       getLineColor: [activeLayer, showHotspots, bavariaHotspots],
       getLineWidth: [activeLayer, showHotspots, bavariaHotspots],
     },
@@ -270,9 +414,15 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     lineWidthMinPixels: 1.5,
     pickable:  true,
     extruded:  false,
-    opacity:   0.65,
+    opacity:   activeLayer === 'drought' ? 1 : 0.65,
+    onClick: activeLayer === 'drought' ? ({ object }: { object?: AustriaFeature }) => {
+      if (!object) return
+      const id = austriaSeed(object)
+      const name = object.properties.name ?? String(id)
+      useAppStore.getState().setSelectedDistrict({ id, name })
+    } : undefined,
     updateTriggers: {
-      getFillColor: [activeLayer, animationYear, austriaGeo.length, splitMode, splitX, viewport?.viewState],
+      getFillColor: [activeLayer, animationYear, austriaGeo.length, splitMode, splitX, viewport?.viewState, climateDataVersion],
       getLineColor: [activeLayer, showHotspots, austriaHotspots],
       getLineWidth: [activeLayer, showHotspots, austriaHotspots],
     },
@@ -316,5 +466,5 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     }))
   }
 
-  return { layers, isLoading }
+  return { layers, isLoading, districtGeo, austriaGeo, activeDroughtCategories }
 }

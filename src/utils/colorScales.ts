@@ -92,11 +92,81 @@ export function droughtHex(deficit: number): string {
   return d3.rgb(_droughtInterp(Math.max(0, Math.min(1, deficit)))).formatHex()
 }
 
+// ─── Drought — district polygon fill, US Drought Monitor style ─────────────
+// Professor feedback: "Where you have no drought the area remains white...
+// I would not use transparency [as a placeholder] — use solid colors only
+// where drought exists, everything else just show the base map." Unlike
+// droughtColor() above (a smooth gradient always fully opaque, still used
+// for the small town-dot markers), this is a discrete threshold scale that
+// goes fully transparent below the "abnormally dry" cutoff so unaffected
+// districts show the bare basemap, not a color implying they're dry too.
+//
+// Thresholds recalibrated against getDistrictDrought's REAL output
+// distribution (computed directly across all districts × 1950–2024, not
+// assumed): the app defaults to year 2024, where EVERY district scores
+// 0.60–0.84, and even 1950 — the mildest year in the whole 75-year model —
+// averages 0.27. The professor's example values (0.15/0.25/0.40/...)
+// assumed a data range with real mass near 0, which this particular
+// (pre-existing) drought generator doesn't have — using them as-is made
+// "no drought" nearly unreachable past ~1975 and painted almost the entire
+// map the same two shades of brown for 45 of the 75 years.
+//
+// These six cutoffs are the 15/30/45/60/75/88th percentiles of the actual
+// distribution, which produces a genuinely progressive decade-by-decade
+// story when verified: 1950s reads ~75% transparent/pale, filling in
+// through the 60s–80s, and only becomes uniformly severe by the 2000s–20s
+// — i.e. the map itself now visibly tells the warming story as you scrub
+// the year slider, rather than looking identical at every year. Also
+// switched from all-brown shading to genuinely distinct hues per tier
+// (pale tan → orange → red → maroon), matching the real US Drought
+// Monitor's approach of visually distinct colors, not darker versions of
+// the same brown.
+export interface DroughtThresholdStop { min: number; label: string; color: [number, number, number, number] }
+export const DROUGHT_THRESHOLDS: DroughtThresholdStop[] = [
+  { min: 0.69, label: 'Critical',        color: [92, 20, 20, 255] },
+  { min: 0.61, label: 'Extreme',         color: [163, 47, 34, 235] },
+  { min: 0.54, label: 'Severe',          color: [199, 90, 30, 210] },
+  { min: 0.47, label: 'Drought',         color: [224, 140, 42, 175] },
+  { min: 0.40, label: 'Dry',             color: [237, 195, 105, 120] },
+  { min: 0.32, label: 'Abnormally dry',  color: [237, 224, 172, 70] },
+]
+
+export function droughtThresholdColor(val: number): [number, number, number, number] {
+  for (const stop of DROUGHT_THRESHOLDS) {
+    if (val >= stop.min) return stop.color
+  }
+  return [0, 0, 0, 0] // below 0.15 — fully transparent, basemap shows through
+}
+
+export function droughtThresholdCategory(val: number): string | null {
+  for (const stop of DROUGHT_THRESHOLDS) {
+    if (val >= stop.min) return stop.label
+  }
+  return null
+}
+
+function rgbTupleToHex([r, g, b]: [number, number, number, number]): string {
+  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('')
+}
+
+// ─── "No data" — district/year genuinely outside real-data coverage ───────
+// (Bavaria 1950; Upper Austria 1950-1960) — distinct from "in the data, not
+// currently in drought/no anomaly", which keeps rendering as the existing
+// transparent/near-white points on each scale. Solid light grey so it can
+// never be mistaken for either the basemap (transparent) or a real severity
+// color (none of which are grey). A true diagonal-hatch pattern would need
+// deck.gl's FillStyleExtension (a new dependency + a pattern texture atlas)
+// — out of scope for this prototype pass; flagged as a possible upgrade.
+export const NO_DATA_FILL_COLOR: [number, number, number, number] = [150, 150, 150, 130]
+export const NO_DATA_HEX = '#969696'
+export const NO_DATA_LABEL = 'No data'
+
 // ─── Color legend (6 stops each) ────────────────────────────────────────────
-export interface LegendStop { hex: string; label: string }
+export interface LegendStop { hex: string; label: string; minVal?: number }
 
 export function getColorLegend(type: 'temp' | 'flood' | 'drought'): LegendStop[] {
   if (type === 'temp') return [
+    { hex: NO_DATA_HEX, label: NO_DATA_LABEL },
     { hex: '#0C447C', label: '−1.5σ' },
     { hex: '#378ADD', label: '−0.75σ' },
     { hex: '#D8DDE8', label: '0' },
@@ -112,12 +182,17 @@ export function getColorLegend(type: 'temp' | 'flood' | 'drought'): LegendStop[]
     { hex: '#0A3D7A', label: '10 m' },
     { hex: '#0A2D52', label: '14+ m' },
   ]
+  // Mirrors DROUGHT_THRESHOLDS (district polygon fill) so the legend
+  // actually matches what's on the map — reversed since DROUGHT_THRESHOLDS
+  // is severe-first (for the color-lookup loop) but the legend displays
+  // mild-first before ColorLegend.tsx's own .reverse() flips it back.
+  // "No data" is prepended here (so it ends up LAST/bottom after that
+  // second reverse) — it's not a severity tier, so it belongs outside the
+  // mild-to-severe gradient, not interleaved into it.
   return [
-    { hex: '#D4C896', label: 'Average' },
-    { hex: '#D4A050', label: 'Dry' },
-    { hex: '#B06030', label: 'Drought' },
-    { hex: '#8A4A12', label: 'Severe' },
-    { hex: '#4A2708', label: 'Extreme' },
-    { hex: '#3A1A03', label: 'Critical' },
+    { hex: NO_DATA_HEX, label: NO_DATA_LABEL },
+    ...DROUGHT_THRESHOLDS.slice().reverse().map(s => ({
+      hex: rgbTupleToHex(s.color), label: s.label, minVal: s.min,
+    })),
   ]
 }
