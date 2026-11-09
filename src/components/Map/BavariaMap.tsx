@@ -28,6 +28,23 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 
 const MAPSTYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
 
+// The drought-tab town markers color themselves via droughtColor(), whose
+// input domain is only 0..1 — a flat `warming - 1.5` offset worked while
+// warming was hand-typed in a narrow ~1.4-1.9°C band, but Phase 4 replaced
+// those with real computed trend values spanning a much wider 1.5-3.3°C
+// range, so most towns' offset now exceeded 1 and clamped to the same
+// darkest color, losing all town-to-town differentiation (verified directly
+// against the real geoData.ts values before concluding this, not assumed).
+// Rescaled to the real range instead of a fixed offset, computed from
+// whatever's actually in BAVARIAN_TOWNS/AUSTRIA_TOWNS today so it keeps
+// working if those real values are ever refreshed from a later pipeline run.
+const ALL_TOWN_WARMING = [...BAVARIAN_TOWNS, ...AUSTRIA_TOWNS].map(t => t.warming)
+const TOWN_WARMING_MIN = Math.min(...ALL_TOWN_WARMING)
+const TOWN_WARMING_MAX = Math.max(...ALL_TOWN_WARMING)
+function townWarmingToDeficit(warming: number): number {
+  return (warming - TOWN_WARMING_MIN) / (TOWN_WARMING_MAX - TOWN_WARMING_MIN)
+}
+
 // Shifted slightly south/east and zoomed out vs. the original Bavaria-only
 // view so Linz, Salzburg, and Braunau (Upper Austria) are visible by default
 // alongside Bavaria — the cross-border extension (see AUSTRIA_TOWNS).
@@ -1029,7 +1046,7 @@ export default function BavariaMap() {
       data: BAVARIAN_TOWNS,
       getPosition: d => [d.lon, d.lat],
       getRadius: d => Math.max(4000, (d.warming - 1.3) * 20000),
-      getFillColor: d => droughtColor(d.warming - 1.5),
+      getFillColor: d => droughtColor(townWarmingToDeficit(d.warming)),
       getLineColor: [255, 200, 80, 60],
       lineWidthMinPixels: 1,
       stroked: true,
@@ -1041,7 +1058,7 @@ export default function BavariaMap() {
       data: AUSTRIA_TOWNS,
       getPosition: d => [d.lon, d.lat],
       getRadius: d => Math.max(4000, (d.warming - 1.3) * 20000),
-      getFillColor: d => droughtColor(d.warming - 1.5),
+      getFillColor: d => droughtColor(townWarmingToDeficit(d.warming)),
       getLineColor: [255, 255, 255, 180],
       lineWidthMinPixels: 2,
       stroked: true,
