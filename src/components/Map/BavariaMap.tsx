@@ -1320,7 +1320,7 @@ export default function BavariaMap() {
           if ('name' in obj) {
             const town = obj as Town
             const flag = town.country === 'AT' ? ' 🇦🇹' : ''
-            const val = activeLayer === 'flood'   ? `${town.floodEvents} events since 2000`
+            const val = activeLayer === 'flood'   ? (town.floodEvents !== null ? `${town.floodEvents} events since 2000` : 'No flood data yet')
                       : activeLayer === 'drought' ? `${town.warming}°C warming`
                       :                             `+${town.warming}°C warming`
             return {

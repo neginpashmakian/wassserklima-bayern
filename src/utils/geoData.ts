@@ -1,14 +1,22 @@
 import type { TownData } from '../store/useAppStore'
 import type { RiverName } from '../store/useAppStore'
 
+// warming/hotDays: computed by data-pipeline/scripts/process_town_climate.py
+// (HYRAS-DE v6-1 tas + DWD grids_germany hot_days, nearest 1km grid cell to
+// each town's coordinates) — not hand-typed. warming = OLS linear-trend
+// total change 1951-2024 (not a raw endpoint difference); hotDays = the
+// 2015-2024 decade average, rounded to the nearest day. Full yearly/decade
+// series, including the warming-trend methodology, live in
+// public/data/towns-climate.json. floodEvents is null until Phase 5
+// computes it from real river-gauge data.
 export const BAVARIAN_TOWNS: TownData[] = [
-  { name: 'Passau',        lat: 48.5748, lon: 13.4647, warming: 1.8, hotDays: 26, floodEvents: 4, color: '#993C1D' },
-  { name: 'München',       lat: 48.1372, lon: 11.5755, warming: 1.9, hotDays: 31, floodEvents: 2, color: '#D85A30' },
-  { name: 'Nürnberg',      lat: 49.4521, lon: 11.0767, warming: 1.7, hotDays: 24, floodEvents: 2, color: '#BA7517' },
-  { name: 'Regensburg',    lat: 49.0134, lon: 12.1016, warming: 1.6, hotDays: 22, floodEvents: 3, color: '#EF9F27' },
-  { name: 'Augsburg',      lat: 48.3717, lon: 10.8983, warming: 1.7, hotDays: 23, floodEvents: 3, color: '#BA7517' },
-  { name: 'Würzburg',      lat: 49.7913, lon: 9.9534,  warming: 1.8, hotDays: 25, floodEvents: 2, color: '#D85A30' },
-  { name: 'Berchtesgaden', lat: 47.6317, lon: 13.0017, warming: 1.4, hotDays: 14, floodEvents: 1, color: '#378ADD' },
+  { name: 'Passau',        lat: 48.5748, lon: 13.4647, warming: 2.8, hotDays: 16, floodEvents: null, color: '#993C1D' },
+  { name: 'München',       lat: 48.1372, lon: 11.5755, warming: 2.3, hotDays: 17, floodEvents: null, color: '#D85A30' },
+  { name: 'Nürnberg',      lat: 49.4521, lon: 11.0767, warming: 2.3, hotDays: 20, floodEvents: null, color: '#BA7517' },
+  { name: 'Regensburg',    lat: 49.0134, lon: 12.1016, warming: 2.7, hotDays: 25, floodEvents: null, color: '#EF9F27' },
+  { name: 'Augsburg',      lat: 48.3717, lon: 10.8983, warming: 1.5, hotDays: 13, floodEvents: null, color: '#BA7517' },
+  { name: 'Würzburg',      lat: 49.7913, lon: 9.9534,  warming: 2.2, hotDays: 21, floodEvents: null, color: '#D85A30' },
+  { name: 'Berchtesgaden', lat: 47.6317, lon: 13.0017, warming: 3.3, hotDays: 14, floodEvents: null, color: '#378ADD' },
 ]
 
 // Upper Austria — Danube corridor cross-border extension. Station IDs are
@@ -18,11 +26,17 @@ export const BAVARIAN_TOWNS: TownData[] = [
 //   Salzburg → id 145  "Salzburg Freisaal" (active since 1987)
 //   Wels     → id 4905 "Wels-Schleißheim"  (active since 1983)
 //   Braunau  → id 75   "Ranshofen Braunau" (active since 1961)
+// warming/hotDays: same pipeline as Bavaria, but warming is a SPARTACUS
+// (GeoSphere) trend computed from each station's OWN real start year (not
+// backfilled before it — Salzburg/Wels/Braunau genuinely have no data
+// before 1987/1983/1961), and hotDays comes from that station's real daily
+// tlmax record (a point measurement, not a grid — no DWD-equivalent hot-day
+// grid exists for Austria in this pipeline), also from its real start year.
 export const AUSTRIA_TOWNS: TownData[] = [
-  { name: 'Linz',     lat: 48.3069, lon: 14.2858, stationId: '56',   warming: 1.9, hotDays: 28, floodEvents: 3, color: '#C94030', country: 'AT' },
-  { name: 'Salzburg', lat: 47.8095, lon: 13.0550, stationId: '145',  warming: 1.7, hotDays: 22, floodEvents: 2, color: '#D85A30', country: 'AT' },
-  { name: 'Wels',     lat: 48.1567, lon: 14.0289, stationId: '4905', warming: 1.8, hotDays: 25, floodEvents: 3, color: '#D85A30', country: 'AT' },
-  { name: 'Braunau',  lat: 48.2561, lon: 13.0344, stationId: '75',   warming: 1.6, hotDays: 20, floodEvents: 4, color: '#BA7517', country: 'AT', note: 'Inn river — directly across from Bavaria' },
+  { name: 'Linz',     lat: 48.3069, lon: 14.2858, stationId: '56',   stationStartYear: 1895, warming: 2.9, hotDays: 25, floodEvents: null, color: '#C94030', country: 'AT' },
+  { name: 'Salzburg', lat: 47.8095, lon: 13.0550, stationId: '145',  stationStartYear: 1987, warming: 1.9, hotDays: 23, floodEvents: null, color: '#D85A30', country: 'AT' },
+  { name: 'Wels',     lat: 48.1567, lon: 14.0289, stationId: '4905', stationStartYear: 1983, warming: 2.5, hotDays: 21, floodEvents: null, color: '#D85A30', country: 'AT' },
+  { name: 'Braunau',  lat: 48.2561, lon: 13.0344, stationId: '75',   stationStartYear: 1961, warming: 3.1, hotDays: 22, floodEvents: null, color: '#BA7517', country: 'AT', note: 'Inn river — directly across from Bavaria' },
 ]
 
 export const BAVARIA_CENTER  = { lat: 48.7, lon: 11.5 }

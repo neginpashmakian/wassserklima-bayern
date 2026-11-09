@@ -15,11 +15,17 @@ export interface TownData {
   lon: number
   warming: number
   hotDays: number
-  floodEvents: number
+  // null until Phase 5 computes this from real river-gauge data (GKD
+  // Bayern / eHYD) — never a fabricated or hand-picked count.
+  floodEvents: number | null
   color: string
   // Cross-border extension (Upper Austria) — omitted for Bavarian towns
   country?: 'DE' | 'AT'
   stationId?: string
+  // Verified directly against GeoSphere's own metadata endpoint (not
+  // assumed) — the real first year this station has data. Requests for
+  // years before this must not go to GeoSphere at all.
+  stationStartYear?: number
   note?: string
 }
 

@@ -28,9 +28,13 @@ export default function TownHeadline() {
       <p className="text-sm mb-8 max-w-xl" style={{ color: 'rgba(232,237,245,0.6)', lineHeight: 1.75 }}>
         {region}'s climate has shifted dramatically over the past seven decades. {selectedTown.name} now
         experiences <strong style={{ color: '#FAC775' }}>{selectedTown.hotDays} hot days per year</strong> above
-        30°C — more than double the 1950–1980 average — and has recorded{' '}
-        <strong style={{ color: '#378ADD' }}>{selectedTown.floodEvents} significant flood events</strong> since
-        2000.
+        30°C — more than double the 1950–1980 average.{' '}
+        {selectedTown.floodEvents !== null
+          ? <>It has also recorded{' '}
+              <strong style={{ color: '#378ADD' }}>{selectedTown.floodEvents} significant flood events</strong> since 2000.
+            </>
+          : <>Flood history for {selectedTown.name} is not yet available from real gauge data.</>
+        }
       </p>
 
       <div className="flex gap-5 flex-wrap">
@@ -48,8 +52,8 @@ export default function TownHeadline() {
         />
         <MetricCard
           label="Flood events"
-          value={selectedTown.floodEvents.toString()}
-          sub="significant since 2000"
+          value={selectedTown.floodEvents !== null ? selectedTown.floodEvents.toString() : '—'}
+          sub={selectedTown.floodEvents !== null ? 'significant since 2000' : 'not yet available'}
           color="#378ADD"
         />
       </div>

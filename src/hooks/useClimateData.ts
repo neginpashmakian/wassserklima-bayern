@@ -10,6 +10,19 @@ const BASE_URL = 'https://archive-api.open-meteo.com/v1/archive'
 // Only the variables we actually render — drop soil_moisture to halve the payload
 const DAILY_VARS = 'temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum'
 
+// Pinned to a specific reanalysis model rather than Open-Meteo's default
+// "era5_seamless" blend, which can silently switch underlying data sources
+// across a requested range without flagging it. `era5_land` (the model
+// originally planned here, for its higher 9km resolution) was verified
+// directly against this endpoint first and does NOT work: it returns `null`
+// for precipitation_sum on every request tried, for any date range —
+// confirmed before trusting it, same as every other source in this
+// pipeline. Plain `era5` (31km, ERA5 reanalysis) was verified to return
+// real values for both temperature and precipitation, so that's used
+// instead — consistent provenance across the whole series, just not the
+// higher-resolution land variant.
+const OPEN_METEO_MODEL = 'era5'
+
 async function fetchRange(town: TownData, start: string, end: string): Promise<DailyRecord[]> {
   const url = new URL(BASE_URL)
   url.searchParams.set('latitude',   town.lat.toString())
@@ -18,18 +31,29 @@ async function fetchRange(town: TownData, start: string, end: string): Promise<D
   url.searchParams.set('end_date',   end)
   url.searchParams.set('daily',      DAILY_VARS)
   url.searchParams.set('timezone',   'Europe/Berlin')
+  url.searchParams.set('models',     OPEN_METEO_MODEL)
 
   const res = await fetch(url.toString())
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}`)
   const json = await res.json()
 
-  return (json.daily.time as string[]).map((date, i) => ({
-    date,
-    tempMax:       json.daily.temperature_2m_max[i]  ?? 0,
-    tempMin:       json.daily.temperature_2m_min[i]  ?? 0,
-    tempMean:      json.daily.temperature_2m_mean[i] ?? 0,
-    precipitation: json.daily.precipitation_sum[i]   ?? 0,
-  }))
+  // Days with a genuinely missing reading are dropped, not coerced to 0 —
+  // `?? 0` here used to turn "no measurement" into "measured zero", which
+  // is a different, false statement (a 0°C day or a bone-dry day are real
+  // outcomes; a null is Open-Meteo saying it doesn't know). A day missing
+  // any of the four fields is excluded entirely rather than partially
+  // filled, since aggregateYearly reads all four from the same record.
+  const time = json.daily.time as string[]
+  const records: DailyRecord[] = []
+  for (let i = 0; i < time.length; i++) {
+    const tempMax  = json.daily.temperature_2m_max[i]  as number | null
+    const tempMin  = json.daily.temperature_2m_min[i]  as number | null
+    const tempMean = json.daily.temperature_2m_mean[i] as number | null
+    const precipitation = json.daily.precipitation_sum[i] as number | null
+    if (tempMax === null || tempMin === null || tempMean === null || precipitation === null) continue
+    records.push({ date: time[i], tempMax, tempMin, tempMean, precipitation })
+  }
+  return records
 }
 
 // Synthetic fallback — realistic-looking warming trend when API is unreachable.

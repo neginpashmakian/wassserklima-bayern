@@ -72,20 +72,33 @@ async function fetchAustriaStation(stationId: string, startDate: string, endDate
   if (!feature) throw new Error('GeoSphere Austria: no data for station')
   const p = feature.properties.parameters
 
-  return json.timestamps.map((date, i) => {
-    const tempMean = p.tl_mittel?.data[i] ?? 0
-    const tempMax  = p.tlmax?.data[i]     ?? tempMean + 4
-    const tempMin  = p.tlmin?.data[i]     ?? tempMean - 4
-    const rawRr    = p.rr?.data[i]        ?? 0
-    return {
-      date:          date.slice(0, 10),
+  // A missing day is dropped, not coerced to a guessed value — tempMax/
+  // tempMin used to fall back to tempMean±4 and rr to 0 (`?? 0`), both of
+  // which invent a reading the station never took. rr's own -1 sentinel
+  // ("no precipitation", a real zero) is still honored and kept distinct
+  // from a genuinely missing null.
+  const records: DailyRecord[] = []
+  for (let i = 0; i < json.timestamps.length; i++) {
+    const tempMean = p.tl_mittel?.data[i] ?? null
+    const tempMax  = p.tlmax?.data[i]     ?? null
+    const tempMin  = p.tlmin?.data[i]     ?? null
+    const rawRr    = p.rr?.data[i]        ?? null
+    if (tempMean === null || tempMax === null || tempMin === null || rawRr === null) continue
+    records.push({
+      date: json.timestamps[i].slice(0, 10),
       tempMax,
       tempMin,
       tempMean,
-      precipitation: rawRr !== null && rawRr < 0 ? 0 : (rawRr ?? 0), // -1 = "no precipitation", not missing
-    }
-  })
+      precipitation: rawRr < 0 ? 0 : rawRr, // -1 = "no precipitation" (a real zero), not missing
+    })
+  }
+  return records
 }
+
+// Same model choice and reasoning as useClimateData.ts's fetchRange —
+// `era5_land` was verified to return null precipitation on this endpoint;
+// plain `era5` returns real values for both temperature and precipitation.
+const OPEN_METEO_MODEL = 'era5'
 
 async function fetchOpenMeteoFallback(town: TownData, startDate: string, endDate: string): Promise<DailyRecord[]> {
   const url = new URL(OPEN_METEO_BASE_URL)
@@ -95,18 +108,24 @@ async function fetchOpenMeteoFallback(town: TownData, startDate: string, endDate
   url.searchParams.set('end_date',   endDate)
   url.searchParams.set('daily',      'temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum')
   url.searchParams.set('timezone',   'Europe/Vienna')
+  url.searchParams.set('models',     OPEN_METEO_MODEL)
 
   const res = await fetch(url.toString())
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}`)
   const json = await res.json()
 
-  return (json.daily.time as string[]).map((date, i) => ({
-    date,
-    tempMax:       json.daily.temperature_2m_max[i]  ?? 0,
-    tempMin:       json.daily.temperature_2m_min[i]  ?? 0,
-    tempMean:      json.daily.temperature_2m_mean[i] ?? 0,
-    precipitation: json.daily.precipitation_sum[i]   ?? 0,
-  }))
+  // Same drop-missing-days policy as fetchRange in useClimateData.ts.
+  const time = json.daily.time as string[]
+  const records: DailyRecord[] = []
+  for (let i = 0; i < time.length; i++) {
+    const tempMax  = json.daily.temperature_2m_max[i]  as number | null
+    const tempMin  = json.daily.temperature_2m_min[i]  as number | null
+    const tempMean = json.daily.temperature_2m_mean[i] as number | null
+    const precipitation = json.daily.precipitation_sum[i] as number | null
+    if (tempMax === null || tempMin === null || tempMean === null || precipitation === null) continue
+    records.push({ date: time[i], tempMax, tempMin, tempMean, precipitation })
+  }
+  return records
 }
 
 // Always try GeoSphere first (it's the authoritative Austrian source and,
@@ -115,11 +134,31 @@ async function fetchOpenMeteoFallback(town: TownData, startDate: string, endDate
 // reason (station outage, network blip, unexpected response shape).
 export async function fetchAustriaDailyRange(town: TownData, startDate: string, endDate: string): Promise<DailyRecord[]> {
   if (!town.stationId) return fetchOpenMeteoFallback(town, startDate, endDate)
+
+  // Clip the request to the station's own real coverage (verified directly
+  // against GeoSphere's metadata endpoint, see stationStartYear in
+  // geoData.ts) before calling it at all. Requesting years before that just
+  // gets an all-null response back (confirmed directly: station 145/
+  // Salzburg queried for 1950 returns every value as null, not an error) —
+  // and if that had been left to throw and fall through to the catch below,
+  // Open-Meteo would silently backfill those years. Worse, it would do so
+  // for the WHOLE requested range on any transient GeoSphere hiccup, not
+  // just the genuinely pre-coverage portion, quietly replacing real
+  // station data with a lower-provenance source. Years before the station
+  // existed are simply never requested and stay absent from the result.
+  let effectiveStart = startDate
+  const requestedStartYear = parseInt(startDate.slice(0, 4), 10)
+  if (town.stationStartYear && town.stationStartYear > requestedStartYear) {
+    const clippedStart = `${town.stationStartYear}-01-01`
+    if (clippedStart > endDate) return [] // the whole requested range predates this station
+    effectiveStart = clippedStart
+  }
+
   try {
-    return await fetchAustriaStation(town.stationId, startDate, endDate)
+    return await fetchAustriaStation(town.stationId, effectiveStart, endDate)
   } catch (err) {
     console.warn('GeoSphere Austria unavailable — falling back to Open-Meteo:', err)
-    return fetchOpenMeteoFallback(town, startDate, endDate)
+    return fetchOpenMeteoFallback(town, effectiveStart, endDate)
   }
 }
 
