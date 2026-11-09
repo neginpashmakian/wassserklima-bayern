@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo, useState } from 'react'
 import * as d3 from 'd3'
 import { useAppStore } from '../../store/useAppStore'
-import { getDistrictDrought } from './BavariaHeatmap'
+import { getDistrictDrought, NO_DATA } from './BavariaHeatmap'
 import { DROUGHT_THRESHOLDS } from '../../utils/colorScales'
 
 // Same "Severe" cutoff the map itself uses (see DROUGHT_THRESHOLDS in
@@ -41,15 +41,18 @@ export default function DroughtDistrictPanel() {
     return () => ro.disconnect()
   }, [activeLayer, selectedDistrict])
 
-  // getDistrictDrought(id3, year) is the same deterministic function driving
-  // the map's own fill color — this history is guaranteed to agree with
-  // whatever the district showed at any past year scrub.
+  // getDistrictDrought(id3, year) is the same function driving the map's own
+  // fill color — this history is guaranteed to agree with whatever the
+  // district showed at any past year scrub. Years with no real data (e.g.
+  // 1950, before HYRAS coverage starts) are dropped rather than plotted as
+  // NO_DATA's raw sentinel value, which would otherwise read as a cliff off
+  // the bottom of the chart — the line simply starts at the first real year.
   const history = useMemo(() => {
     if (!selectedDistrict) return []
     return Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => ({
       year: START_YEAR + i,
       value: getDistrictDrought(selectedDistrict.id, START_YEAR + i),
-    }))
+    })).filter(d => d.value !== NO_DATA)
   }, [selectedDistrict])
 
   useEffect(() => {

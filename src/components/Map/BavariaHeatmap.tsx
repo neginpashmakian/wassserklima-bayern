@@ -3,7 +3,7 @@ import { PolygonLayer, TextLayer } from '@deck.gl/layers'
 import { WebMercatorViewport } from '@deck.gl/core'
 import type { Layer, MapViewState } from '@deck.gl/core'
 import { useAppStore } from '../../store/useAppStore'
-import { tempAnomalyColor, droughtThresholdColor, droughtThresholdCategory } from '../../utils/colorScales'
+import { tempAnomalyColor, droughtThresholdColor, droughtThresholdCategory, NO_DATA_FILL_COLOR, NO_DATA_LABEL } from '../../utils/colorScales'
 
 // Pre-filtered Bavaria-only GeoJSON bundled in public/. Properties: NAME_3 (district name),
 // ID_3 (integer district ID), NAME_2 (Regierungsbezirk), ID_1=2 (Bayern state code).
@@ -115,35 +115,68 @@ function lookupClimateYear(seed: number, year: number): DistrictYearClimate | nu
   return null
 }
 
+// Sentinel for "no real data exists here" (district/year outside coverage —
+// Bavaria 1950, Upper Austria 1950-1960) — NOT the same as "in the data,
+// not in drought". -999 is unreachable by either the 0..1 drought index or
+// any plausible °C anomaly, so `=== NO_DATA` is unambiguous everywhere this
+// is checked. Exported so sibling consumers (DroughtDistrictPanel,
+// DroughtRanking) can recognize it instead of silently averaging it in.
+export const NO_DATA = -999
+
 // Maps real SPI-12 (December value; more negative = drier) onto the same
 // 0..1 "drought index" scale DROUGHT_THRESHOLDS/droughtThresholdColor
-// already expect (left untouched, per instruction, along with the legend) —
+// already expect (left untouched, along with the legend's existing rows) —
 // so real data drives the existing color scale instead of changing it.
-// Anchored at the same two cutoffs the Python pipeline uses to classify
-// droughtClass: SPI ≤ -0.5 (D0, "abnormally dry") → 0.32, the first visible
-// tier here; SPI ≤ -2.0 (D4, "exceptional drought") → 0.69, "Critical".
-// Linear between those two, clamped outside — wetter-than -0.5 always lands
-// below 0.32, i.e. transparent/no-drought, regardless of how wet.
-const SPI_AT_FIRST_TIER   = -0.5
-const SPI_AT_LAST_TIER    = -2.0
-const INDEX_AT_FIRST_TIER = 0.32
-const INDEX_AT_LAST_TIER  = 0.69
+// PIECEWISE (not a single linear fit) so every D-class boundary the Python
+// pipeline uses for droughtClass lands EXACTLY on the corresponding existing
+// UI tier boundary — the D-classes are not evenly spaced in SPI (D0-D1 spans
+// 0.3, D1-D2 spans 0.5, D2-D3 spans 0.3, D3-D4 spans 0.4), so a single linear
+// map can't hit all of them at once:
+//   SPI -0.5 (D0, abnormally dry)   -> 0.32 "Abnormally dry"
+//   SPI -0.8 (D1, moderate)         -> 0.40 "Dry"
+//   SPI -1.3 (D2, severe)           -> 0.47 "Drought"
+//   SPI -1.6 (D3, extreme)          -> 0.54 "Severe"
+//   SPI -2.0 (D4, exceptional)      -> 0.61 "Extreme"
+// There's no further real D-class boundary beyond D4 to anchor "Critical"
+// (0.69) to, so it's reached by continuing the D3->D4 segment's own rate
+// rather than a separately chosen cutoff — works out to SPI ≈ -2.46.
+// Wetter than -0.5 (not in any D-class) always maps to 0, i.e. transparent.
+const SPI_INDEX_BREAKPOINTS: [number, number][] = [
+  [-0.5, 0.32],
+  [-0.8, 0.40],
+  [-1.3, 0.47],
+  [-1.6, 0.54],
+  [-2.0, 0.61],
+]
 
 function spiToDroughtIndex(spi12: number | null): number {
-  if (spi12 === null) return 0 // no data for this district/year — renders transparent, same as "no drought"
-  const t = (spi12 - SPI_AT_FIRST_TIER) / (SPI_AT_LAST_TIER - SPI_AT_FIRST_TIER)
-  const idx = INDEX_AT_FIRST_TIER + t * (INDEX_AT_LAST_TIER - INDEX_AT_FIRST_TIER)
-  return Math.max(0, Math.min(1, idx))
+  if (spi12 === null) return 0 // not a missing-data case (that's handled one level up) — just "no drought this year"
+  if (spi12 > SPI_INDEX_BREAKPOINTS[0][0]) return 0 // wetter than D0 — no drought
+  for (let i = 0; i < SPI_INDEX_BREAKPOINTS.length - 1; i++) {
+    const [s0, idx0] = SPI_INDEX_BREAKPOINTS[i]
+    const [s1, idx1] = SPI_INDEX_BREAKPOINTS[i + 1]
+    if (spi12 > s1) {
+      const t = (spi12 - s0) / (s1 - s0)
+      return idx0 + t * (idx1 - idx0)
+    }
+  }
+  const [s0, idx0] = SPI_INDEX_BREAKPOINTS[SPI_INDEX_BREAKPOINTS.length - 2]
+  const [s1, idx1] = SPI_INDEX_BREAKPOINTS[SPI_INDEX_BREAKPOINTS.length - 1]
+  const slope = (idx1 - idx0) / (s1 - s0)
+  return Math.min(1, idx1 + slope * (spi12 - s1))
 }
 
 export function getDistrictDrought(id3: number, year: number): number {
-  return spiToDroughtIndex(lookupClimateYear(id3, year)?.spi12 ?? null)
+  const rec = lookupClimateYear(id3, year)
+  if (rec === null) return NO_DATA // this district/year has no real coverage at all
+  return spiToDroughtIndex(rec.spi12)
 }
 
 // Averages only over years with real data (e.g. a 1950-1959 "decade" against
-// Bavaria's 1951-2024 coverage has 9 real years, not 10; a 1950s Austria
-// average has none at all) rather than dividing by a fixed decade length —
-// a missing year must not silently pull the average toward "no drought".
+// Bavaria's 1951-2024 coverage has 9 real years, not 10) rather than
+// dividing by a fixed decade length — a missing year must not silently pull
+// the average toward "no drought". If NO year in range has data (Upper
+// Austria's 1950s), returns NO_DATA rather than 0.
 export function getDecadeAvg(id3: number, startY: number, endY: number): number {
   let sum = 0
   let n = 0
@@ -153,20 +186,21 @@ export function getDecadeAvg(id3: number, startY: number, endY: number): number 
     sum += spiToDroughtIndex(spi12)
     n++
   }
-  return n > 0 ? sum / n : 0 // no real data anywhere in range — transparent
+  return n > 0 ? sum / n : NO_DATA
 }
 
 // Real temperature anomaly (°C vs. the 1961-1990 baseline), already in the
 // exact units tempAnomalyColor expects — no transform needed here, unlike
 // the drought index above.
 export function getClimateAnomaly(id3: number, year: number): number {
-  return lookupClimateYear(id3, year)?.tasAnomaly ?? 0 // no data — renders as the neutral/near-white point on the scale
+  const rec = lookupClimateYear(id3, year)
+  return rec === null ? NO_DATA : (rec.tasAnomaly ?? NO_DATA)
 }
 
 // Districts flagged as hotspots: ranked by how often they cross the same
 // "abnormally dry" visual threshold used above (idx > 0.32, i.e. SPI ≤ -0.5
-// at least that year), capped to the worst `topK`. Recalibrated against the
-// REAL SPI distribution (verified directly, same discipline as the original
+// that year), capped to the worst `topK`. Recalibrated against the REAL SPI
+// distribution (verified directly, same discipline as the original
 // recalibration note this replaced): no Bavaria district is ever in at
 // least D0 drought more than 50% of years 1951-2024 — the old synthetic
 // generator's ">50% of years" floor is unreachable with real climate data
@@ -174,13 +208,16 @@ export function getClimateAnomaly(id3: number, year: number): number {
 // `minPct` is lowered to 0.30, comfortably below the top 5-10 districts'
 // real values (0.35-0.50) and well above the Bavaria-wide mean (0.30) —
 // `topK`, not `minPct`, is what actually bounds the result in practice, as
-// originally intended.
+// originally intended. NO_DATA years never count as severe (-999 is always
+// below the threshold), so missing coverage can only ever lower a district's
+// ranking, never inflate it.
+const HOTSPOT_SEVERITY_CUTOFF = SPI_INDEX_BREAKPOINTS[0][1] // 0.32 — D0 "abnormally dry"
 function computeHotspots(seeds: number[], topK: number, minPct = 0.30): Map<number, number> {
   const totalYears = 2024 - 1950 + 1
   const scored = seeds.map(seed => {
     let severeCount = 0
     for (let y = 1950; y <= 2024; y++) {
-      if (getDistrictDrought(seed, y) > INDEX_AT_FIRST_TIER) severeCount++
+      if (getDistrictDrought(seed, y) > HOTSPOT_SEVERITY_CUTOFF) severeCount++
     }
     return { seed, pct: severeCount / totalYears }
   })
@@ -263,11 +300,13 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
     const y = animationYear ?? 2024
     const cats = new Set<string>()
     districtGeo.forEach(f => {
-      const cat = droughtThresholdCategory(getDistrictDrought(f.properties.ID_3 ?? 0, y))
+      const val = getDistrictDrought(f.properties.ID_3 ?? 0, y)
+      const cat = val === NO_DATA ? NO_DATA_LABEL : droughtThresholdCategory(val)
       if (cat) cats.add(cat)
     })
     austriaGeo.forEach(f => {
-      const cat = droughtThresholdCategory(getDistrictDrought(austriaSeed(f), y))
+      const val = getDistrictDrought(austriaSeed(f), y)
+      const cat = val === NO_DATA ? NO_DATA_LABEL : droughtThresholdCategory(val)
       if (cat) cats.add(cat)
     })
     return cats
@@ -297,13 +336,16 @@ export function useBavariaHeatmapLayer(viewport: MapViewport | null): {
       // "abnormally dry" cutoff instead of always painting every district.
       if (mercViewport) {
         const [screenX] = mercViewport.project(centroid)
-        return screenX < splitPixelX
-          ? droughtThresholdColor(getDecadeAvg(seed, 1950, 1959))
-          : droughtThresholdColor(getDecadeAvg(seed, 2010, 2019))
+        const val = screenX < splitPixelX
+          ? getDecadeAvg(seed, 1950, 1959)
+          : getDecadeAvg(seed, 2010, 2019)
+        return val === NO_DATA ? NO_DATA_FILL_COLOR : droughtThresholdColor(val)
       }
-      return droughtThresholdColor(getDistrictDrought(seed, year))
+      const val = getDistrictDrought(seed, year)
+      return val === NO_DATA ? NO_DATA_FILL_COLOR : droughtThresholdColor(val)
     }
-    return tempAnomalyColor(getClimateAnomaly(seed, year))
+    const anomaly = getClimateAnomaly(seed, year)
+    return anomaly === NO_DATA ? NO_DATA_FILL_COLOR : tempAnomalyColor(anomaly)
   }
 
   const bavariaLayer = new PolygonLayer<GeoFeature>({

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
-import { getDistrictDrought, austriaSeed, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
+import { getDistrictDrought, austriaSeed, NO_DATA, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
 import { droughtHex } from '../../utils/colorScales'
 
 // Professor feedback: "It would be nice to see an index or ranking — which
@@ -22,10 +22,19 @@ export default function DroughtRanking({ districtGeo, austriaGeo }: { districtGe
   const [showRanking, setShowRanking] = useState(false)
 
   const ranking = useMemo(() => {
+    // Skips NO_DATA years (1950 for Bavaria; 1950-1960 entirely for Austria)
+    // rather than averaging the sentinel in, which would otherwise drag
+    // every ranking sharply and misleadingly negative.
     const avgOf = (id: number): number => {
       let sum = 0
-      for (let y = START_YEAR; y <= END_YEAR; y++) sum += getDistrictDrought(id, y)
-      return sum / (END_YEAR - START_YEAR + 1)
+      let n = 0
+      for (let y = START_YEAR; y <= END_YEAR; y++) {
+        const v = getDistrictDrought(id, y)
+        if (v === NO_DATA) continue
+        sum += v
+        n++
+      }
+      return n > 0 ? sum / n : 0
     }
     const bavaria: RankedDistrict[] = districtGeo.map(f => {
       const id = f.properties.ID_3 ?? 0

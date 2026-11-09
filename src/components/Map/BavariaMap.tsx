@@ -13,7 +13,7 @@ import { useClimateData } from '../../hooks/useClimateData'
 import { useFloodData } from '../../hooks/useFloodData'
 import { useLiveFloodData } from '../../hooks/useLiveFloodData'
 import { tempAnomalyColor, droughtColor } from '../../utils/colorScales'
-import { useBavariaHeatmapLayer, getDistrictDrought, getDecadeAvg, getClimateAnomaly, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
+import { useBavariaHeatmapLayer, getDistrictDrought, getDecadeAvg, getClimateAnomaly, NO_DATA, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
 import MapControls from './MapControls'
 import RiverProfile from './RiverProfile'
 import RiverComparison from './RiverComparison'
@@ -1157,9 +1157,16 @@ export default function BavariaMap() {
       const splitPixelX = splitX * containerSize.width
       const era = screenX < splitPixelX ? '1950s' : '2010s'
       const avg = screenX < splitPixelX ? getDecadeAvg(seed, 1950, 1959) : getDecadeAvg(seed, 2010, 2019)
+      if (avg === NO_DATA) return `No data (${era} avg)`
       return `Drought index ${avg.toFixed(2)} (${era} avg)`
     }
-    return `Drought index ${getDistrictDrought(seed, year).toFixed(2)}`
+    const val = getDistrictDrought(seed, year)
+    return val === NO_DATA ? 'No data' : `Drought index ${val.toFixed(2)}`
+  }
+
+  const climateTooltipValue = (seed: number, year: number): string => {
+    const anomaly = getClimateAnomaly(seed, year)
+    return anomaly === NO_DATA ? 'No data' : `+${anomaly.toFixed(1)}°C warming`
   }
 
   return (
@@ -1277,7 +1284,7 @@ export default function BavariaMap() {
             const year = animationYear ?? 2024
             const val = activeLayer === 'drought'
               ? droughtTooltipValue(seed, year, info.x)
-              : `+${getClimateAnomaly(seed, year).toFixed(1)}°C warming`
+              : climateTooltipValue(seed, year)
             const name = String(f.properties.name ?? seed)
             return {
               html: `<div style="color:white;font-size:12px;padding:6px 10px;line-height:1.6">
@@ -1297,7 +1304,7 @@ export default function BavariaMap() {
             if (activeLayer === 'drought') {
               val = droughtTooltipValue(id3, year, info.x)
             } else {
-              val = `+${getClimateAnomaly(id3, year).toFixed(1)}°C warming`
+              val = climateTooltipValue(id3, year)
             }
             const name = String(f.properties.NAME_3 ?? id3)
             return {

@@ -149,11 +149,24 @@ function rgbTupleToHex([r, g, b]: [number, number, number, number]): string {
   return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('')
 }
 
+// ─── "No data" — district/year genuinely outside real-data coverage ───────
+// (Bavaria 1950; Upper Austria 1950-1960) — distinct from "in the data, not
+// currently in drought/no anomaly", which keeps rendering as the existing
+// transparent/near-white points on each scale. Solid light grey so it can
+// never be mistaken for either the basemap (transparent) or a real severity
+// color (none of which are grey). A true diagonal-hatch pattern would need
+// deck.gl's FillStyleExtension (a new dependency + a pattern texture atlas)
+// — out of scope for this prototype pass; flagged as a possible upgrade.
+export const NO_DATA_FILL_COLOR: [number, number, number, number] = [150, 150, 150, 130]
+export const NO_DATA_HEX = '#969696'
+export const NO_DATA_LABEL = 'No data'
+
 // ─── Color legend (6 stops each) ────────────────────────────────────────────
 export interface LegendStop { hex: string; label: string; minVal?: number }
 
 export function getColorLegend(type: 'temp' | 'flood' | 'drought'): LegendStop[] {
   if (type === 'temp') return [
+    { hex: NO_DATA_HEX, label: NO_DATA_LABEL },
     { hex: '#0C447C', label: '−1.5σ' },
     { hex: '#378ADD', label: '−0.75σ' },
     { hex: '#D8DDE8', label: '0' },
@@ -173,7 +186,13 @@ export function getColorLegend(type: 'temp' | 'flood' | 'drought'): LegendStop[]
   // actually matches what's on the map — reversed since DROUGHT_THRESHOLDS
   // is severe-first (for the color-lookup loop) but the legend displays
   // mild-first before ColorLegend.tsx's own .reverse() flips it back.
-  return DROUGHT_THRESHOLDS.slice().reverse().map(s => ({
-    hex: rgbTupleToHex(s.color), label: s.label, minVal: s.min,
-  }))
+  // "No data" is prepended here (so it ends up LAST/bottom after that
+  // second reverse) — it's not a severity tier, so it belongs outside the
+  // mild-to-severe gradient, not interleaved into it.
+  return [
+    { hex: NO_DATA_HEX, label: NO_DATA_LABEL },
+    ...DROUGHT_THRESHOLDS.slice().reverse().map(s => ({
+      hex: rgbTupleToHex(s.color), label: s.label, minVal: s.min,
+    })),
+  ]
 }

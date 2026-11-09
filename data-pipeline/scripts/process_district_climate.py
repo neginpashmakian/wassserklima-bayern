@@ -46,6 +46,7 @@ SPI_START_YEAR = 1930  # pr series actually starts 1930-01, NOT 1931 as the file
 DROUGHT_CLASSES = [
     (-2.0, 'D4'), (-1.6, 'D3'), (-1.3, 'D2'), (-0.8, 'D1'), (-0.5, 'D0'),
 ]
+D1_THRESHOLD = -0.8  # moderate drought or worse — used for decadeAvg.spiD1Share below
 
 def spi_to_class(spi):
     if spi is None or np.isnan(spi):
@@ -193,12 +194,26 @@ for ags in AGS_LIST:
         def avg_field(field):
             vals = [yearly[str(y)][field] for y in years_in_decade if yearly[str(y)][field] is not None]
             return round(float(np.mean(vals)), 2) if vals else None
+        # Share of years in this decade with SPI-12 <= D1_THRESHOLD (moderate
+        # drought or worse), over years with real data only -- a missing year
+        # is excluded from the denominator, not counted as "not dry". NOT
+        # wired into the UI yet (computed for discussion only, per request):
+        # a candidate alternative to decadeAvg.spi12 for the split map, since
+        # a straight decade-averaged SPI washes out single dry years badly
+        # (e.g. 2015/2018 averaged against several wetter years in the same
+        # decade) -- this is a direct per-year frequency instead.
+        spi_vals_in_decade = [yearly[str(y)]['spi12'] for y in years_in_decade if yearly[str(y)]['spi12'] is not None]
+        spi_d1_share = (
+            round(sum(1 for v in spi_vals_in_decade if v <= D1_THRESHOLD) / len(spi_vals_in_decade), 3)
+            if spi_vals_in_decade else None
+        )
         decades[str(d)] = {
             'tasMean': avg_field('tasMean'),
             'tasAnomaly': avg_field('tasAnomaly'),
             'prSum': avg_field('prSum'),
             'spi12': avg_field('spi12'),
             'hotDays': avg_field('hotDays'),
+            'spiD1Share': spi_d1_share,
         }
 
     output[ags] = {
