@@ -1,0 +1,291 @@
+{
+  "_comment": "Collected 2026-11-10 from HND Bayern 'Statistik' pages (hnd.bayern.de/pegel/.../statistik) and, for Linz, computed directly from the real eHYD daily CSV (no HND-equivalent page exists for Austria). For validation and flood-event counting only (Phase 5a decision 4) -- NOT the source of the actual daily series used in the app, which comes from the GKD/eHYD CSV downloads processed in Phase 5b. Some HND statistik pages return a recent-window top-5 (e.g. Passau's visible table starts in 2016 despite including 2013/2002/1981 entries) rather than a true all-time top-5; where a well-documented older flood (e.g. 1954) is known to be missing from a station's own digitized top-5, that is noted explicitly rather than silently added.",
+  "stations": [
+    {
+      "id": "passau",
+      "name": "Passau / Donau",
+      "river": "Donau",
+      "siteNumber": "10091008",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_passau/passau-10091008/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": null,
+      "meldestufenNote": "Not shown on the statistik page itself; not separately collected for this gauge (Pegelonline/WSV-operated, may be federally managed rather than through HND's Bavarian Meldestufen system).",
+      "top5": [
+        { "level_cm": 1290, "date": "2013-06-03" },
+        { "level_cm": 1080, "date": "2002-08-13" },
+        { "level_cm": 998,  "date": "2024-06-04" },
+        { "level_cm": 939,  "date": "2002-03-22" },
+        { "level_cm": 934,  "date": "1981-07-21" }
+      ],
+      "notes": "1954 flood (1220 cm, ~10/11 July 1954, independently confirmed via undine.bafg.de and hochwasser-passau.de -- see Phase 5a report) does NOT appear in this gauge's own digitized top-5, which otherwise matches real 2013/2002/2024 figures closely. 2013-06-03 1290 cm matches the user-supplied 12.89 m almost exactly (1 cm rounding). 2024-06-04 998 cm = 9.98 m, i.e. just under 10 m, not over 10 m as recalled."
+    },
+    {
+      "id": "passau-ilzstadt-reference-only",
+      "name": "Passau Ilzstadt / Donau (reference only -- NOT used; see Phase 5a decision)",
+      "river": "Donau",
+      "siteNumber": "10092000",
+      "sourceUrl": "https://www.pegelonline.wsv.de/gast/stammdaten?pegelnr=10092000",
+      "accessDate": "2026-11-09",
+      "notes": "1.45 km further downstream than 10091008, catchment 76,642 km2 (includes Inn + Ilz, vs 10091008's 49,738 km2 Danube-only). Pegelonline's own HHW field for this station read '1279 cm, 10.07.1954' in one fetch -- this conflicts with the independently verified 1954 value of 1220 cm at the main Passau gauge, and is flagged here as unresolved/unverified rather than used for anything. The app uses 10091008 (GKD's official 'Passau / Donau', = Pegelonline 'PASSAU DONAU') per the explicit instruction, not this station."
+    },
+    {
+      "id": "linz",
+      "name": "Linz / Donau",
+      "river": "Donau",
+      "siteNumber": "HZB 207068",
+      "sourceUrl": "https://ehyd.gv.at/services/MessstellenExtraData/owf?id=207068&file=2 (computed directly from the real daily CSV, 1921-01-01 to 2024-01-01)",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": null,
+      "meldestufenNote": "eHYD/Austria has no Meldestufen-equivalent field exposed in this export; not collected.",
+      "top5": [
+        { "level_cm": 954, "date": "1954 (year max; exact date not extracted in this pass)" },
+        { "level_cm": 888, "date": "2013 (year max)" },
+        { "level_cm": 806, "date": "2002 (year max)" },
+        { "level_cm": 787, "date": "1965 (year max)" },
+        { "level_cm": 756, "date": "1940 (year max)" }
+      ],
+      "notes": "Computed from real data, not a web table -- see Phase 5a report. At Linz, 1954 (954 cm) is HIGHER than 2013 (888 cm), the reverse ranking from Passau -- a genuine real difference between the two gauges, not an error. Old hand-typed LINZ_DANUBE_HISTORICAL values (useAustriaFloodData.ts: 1954=8.9m, 2002=9.05m, 2013=9.28m) are all wrong; real values are 9.54 m, 8.06 m, 8.88 m respectively."
+    },
+    {
+      "id": "ulm",
+      "name": "Neu-Ulm / Donau",
+      "river": "Donau",
+      "siteNumber": "10026293",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_kelheim/neu-ulm-10026293/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 330, "M2": 350, "M3": 430, "M4": 480 },
+      "top5_discharge_m3s_NOTE": "Search returned a discharge (Abfluss) extremes table, not water level -- re-check the level statistik directly when downloading.",
+      "top5_discharge_m3s": [
+        { "value": 1250, "date": "1882-12-29" },
+        { "value": 1140, "date": "1862-02-02" },
+        { "value": 1050, "date": "1876-06-13" },
+        { "value": 1020, "date": "1999-05-23" },
+        { "value": 975,  "date": "2005-08-24" }
+      ],
+      "top5": null,
+      "notes": "Ulm itself is in Baden-Württemberg, outside GKD Bayern's network -- Neu-Ulm (Bavaria side) is the real equivalent, used here in place of the app's generic 'Ulm' label."
+    },
+    {
+      "id": "ingolstadt",
+      "name": "Ingolstadt Luitpoldstraße / Donau",
+      "river": "Donau",
+      "siteNumber": "10046105",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_kelheim/ingolstadt-luitpoldstrasse-10046105/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 440, "M2": null, "M3": 550, "M4": 620 },
+      "top5": [
+        { "level_cm": 641, "date": "2024-06-05" },
+        { "level_cm": 632, "date": "2005-08-25" },
+        { "level_cm": 587, "date": "2013-06-04" },
+        { "level_cm": 505, "date": "2010-08-07" },
+        { "level_cm": 503, "date": "2019-05-23" }
+      ],
+      "notes": "2024 is the actual #1 record at this gauge, unlike Passau/Deggendorf/Schwabelweis where 2013 remains highest -- genuine spatial variation along the Danube, not an error."
+    },
+    {
+      "id": "regensburg",
+      "name": "Schwabelweis / Donau",
+      "river": "Donau",
+      "siteNumber": "10062000",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_passau/schwabelweis-10062000/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 440, "M2": 470, "M3": 530, "M4": 570 },
+      "top5": [
+        { "level_cm": 693, "date": "2013-06-04" },
+        { "level_cm": 672, "date": "1988-03-28" },
+        { "level_cm": 663, "date": "2002-08-14" },
+        { "level_cm": 656, "date": "1965-06-14" },
+        { "level_cm": 656, "date": "1954-07-13" }
+      ],
+      "notes": "Unlike Passau's statistik page, 1954 DOES appear here (tied 5th, 656 cm, 1954-07-13) -- this gauge's digitized record goes back further. 'Schwabelweis' is GKD/HND's name for what the app currently labels 'Regensburg'."
+    },
+    {
+      "id": "deggendorf",
+      "name": "Deggendorf / Donau",
+      "river": "Donau",
+      "siteNumber": "10081004",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_passau/deggendorf-10081004/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 530, "M2": 550, "M3": 600, "M4": 670 },
+      "top5": [
+        { "level_cm": 806, "date": "2013-06-04" },
+        { "level_cm": 745, "date": "2024-06-05" },
+        { "level_cm": 745, "date": "2002-08-15" },
+        { "level_cm": 745, "date": "1999-05-26" },
+        { "level_cm": 718, "date": "1988-03-28" }
+      ],
+      "notes": "Three-way tie at 745 cm for 2nd-4th (2024, 2002, 1999) as reported by the search summary -- worth re-verifying exact cm precision directly from the page when downloading, a tie this exact across 3 different decades is slightly unusual."
+    },
+    {
+      "id": "donauwoerth",
+      "name": "Donauwörth / Donau",
+      "river": "Donau",
+      "siteNumber": "10039802",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_kelheim/donauwoerth-10039802/stammdaten",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": null,
+      "top5": null,
+      "notes": "Confirmed on the Danube, not the Lech (per Phase 5a decision) -- moved from the app's Lech list to the Danube list. Statistik top-5/Meldestufen not yet collected for this station; fetch alongside the others in Phase 5b."
+    },
+    {
+      "id": "rosenheim",
+      "name": "Rosenheim o.d. Mangfallmündung / Inn",
+      "river": "Inn",
+      "siteNumber": "18001508",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/inn/rosenheim-o-d-mangfallmuendung-18001508/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 350, "M2": 400, "M3": 500, "M4": null },
+      "top5": [
+        { "level_cm": 568, "date": "2005-08-23" },
+        { "level_cm": 551, "date": "1985-08-07" },
+        { "level_cm": 522, "date": "1999-05-21" },
+        { "level_cm": 511, "date": "2013-06-02" },
+        { "level_cm": 493, "date": "1981-07-20" }
+      ],
+      "notes": "A second, very similar 'Rosenheim u.d. Mangfallmündung' gauge (18002001, downstream of the same confluence) also exists with slightly different values (e.g. 2013 peak 468 cm there vs 511 cm here) -- 'o.d.' (upstream of Mangfall) is used here since it's the one with full Meldestufen confirmed."
+    },
+    {
+      "id": "muehldorf",
+      "name": "Mühldorf / Inn",
+      "river": "Inn",
+      "siteNumber": "18004506",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/inn/muehldorf-18004506/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 500, "M2": 550, "M3": 600, "M4": 780 },
+      "top5": [
+        { "level_cm": 799, "date": "2005-08-24" },
+        { "level_cm": 766, "date": "1985-08-07" },
+        { "level_cm": 708, "date": "2013-06-03" },
+        { "level_cm": 677, "date": "1981-07-20" },
+        { "level_cm": 662, "date": "1999-05-22" }
+      ]
+    },
+    {
+      "id": "braunau-simbach-kw-EXCLUDED",
+      "name": "Braunau-Simbach KW / Inn (original app station -- EXCLUDED per Phase 5a decision)",
+      "river": "Inn",
+      "siteNumber": "18005702",
+      "operator": "Verbund AG Wasserkraft Österreich",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/inn/braunau-simbach-kw-18005702/stammdaten",
+      "accessDate": "2026-11-09",
+      "notes": "Confirmed hydropower-company-operated (Verbund AG Wasserkraft Österreich), not LfU/WWA -- download/licence status for a third-party hydropower gauge was not pursued further since a real WWA Deggendorf alternative (Passau-Ingling, 18008008) was found on the same river, lower down, closer to the Danube confluence."
+    },
+    {
+      "id": "braunau",
+      "name": "Passau Ingling / Inn (replaces Braunau-Simbach KW)",
+      "river": "Inn",
+      "siteNumber": "18008008",
+      "operator": "Wasserwirtschaftsamt Deggendorf",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/inn/passau-ingling-18008008/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": null, "M2": null, "M3": null, "M4": null },
+      "meldestufenNote": "Only a single 'Meldebeginn 475 cm' figure found, not broken into M1-M4 separately -- re-check the live page directly in Phase 5b.",
+      "top5": [
+        { "level_cm": 1160, "date": "2013-06-03" },
+        { "level_cm": 973,  "date": "2002-08-13" },
+        { "level_cm": 888,  "date": "1985-08-08" },
+        { "level_cm": 876,  "date": "1981-07-21" },
+        { "level_cm": 864,  "date": "1991-08-03" }
+      ],
+      "notes": "Government-operated (WWA Deggendorf), at the very mouth of the Inn (river km 3.10, just above the Danube confluence at Passau) -- the most representative 'full Inn' gauge available, and a real government station rather than a hydropower company's. This is a DIFFERENT physical location from Braunau (further upstream, at the Austria border) -- flagged clearly since the app's existing 'Braunau' label/coordinates would need to move or be relabeled, a decision left to Phase 5b's geoData.ts update."
+    },
+    {
+      "id": "munich",
+      "name": "München / Isar",
+      "river": "Isar",
+      "siteNumber": "16005701",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/isar/muenchen-16005701/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 240, "M2": 300, "M3": 380, "M4": 520 },
+      "top5": [
+        { "level_cm": 542, "date": "2005-08-24" },
+        { "level_cm": 469, "date": "1999-05-22" },
+        { "level_cm": 432, "date": "2013-06-03" },
+        { "level_cm": 424, "date": "1981-07-20" },
+        { "level_cm": 424, "date": "1979-06-18" }
+      ],
+      "notes": "Matches the existing hand-typed STATION_IDS['München'] = '16005701' in useFloodData.ts exactly -- already the correct site number, just never had real data pulled from it."
+    },
+    {
+      "id": "landshut",
+      "name": "Landshut Birket / Isar",
+      "river": "Isar",
+      "siteNumber": "16007004",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/isar/landshut-birket-16007004/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 225, "M2": null, "M3": 310, "M4": 380 },
+      "top5": [
+        { "level_cm": 403, "date": "2013-06-04" },
+        { "level_cm": 388, "date": "1999-05-25" },
+        { "level_cm": 388, "date": "1979-06-19" }
+      ],
+      "notes": "Only 3 of 5 top entries captured in this pass -- re-check directly in Phase 5b. 'Landshut Birket', not 'Landshut Flutmulde' (16007106), per the explicit decision."
+    },
+    {
+      "id": "augsburg",
+      "name": "Augsburg u. d. Wertachmündung / Lech",
+      "river": "Lech",
+      "siteNumber": "12006000",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/donau_bis_kelheim/augsburg-u-d-wertachmuendung-12006000/statistik",
+      "accessDate": "2026-11-09",
+      "meldestufen_cm": { "M1": 370, "M2": 470, "M3": 490, "M4": 550 },
+      "top5": [
+        { "level_cm": 559, "date": "2005-08-24" },
+        { "level_cm": 556, "date": "1970-08-11" },
+        { "level_cm": 553, "date": "1999-05-22" }
+      ],
+      "notes": "Only 3 of 5 top entries captured in this pass. 2013 is notably NOT in this short list (Lech flooding was much less severe than Danube/Isar/Inn that year) -- consistent with real 2013 meteorology being Danube/Inn-centered. This is the LOWEST (most downstream) state-operated gauge on the Lech -- confirmed via two independent checks (WWA Donauwörth's own Lech Gewässerportrait page, and the Augsburg gauge's own 'nearby stations' list) that no further-downstream Lech gauge exists in the Bavarian state network; Donauwörth itself is on the Danube, not the Lech."
+    },
+    {
+      "id": "chiemsee",
+      "name": "Stock / Chiemsee",
+      "river": "Chiemsee (lake)",
+      "siteNumber": "18400503",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/inn/stock-18400503/statistik",
+      "accessDate": "2026-11-09",
+      "top5_high_mNHN": [
+        { "level_mNHN": 519.98, "date": "2013-06-03" },
+        { "level_mNHN": 519.96, "date": "1954-07-11" },
+        { "level_mNHN": 519.79, "date": "1920-09-08" },
+        { "level_mNHN": 519.78, "date": "1965-06-12" },
+        { "level_mNHN": 519.62, "date": "1991-08-04" }
+      ],
+      "lowest_years_NOTE": "Not resolved via web search in this pass -- the lowest-years ranking (needed for the professor's 2022-2023 record-low question) will be computed directly from the real downloaded daily CSV in Phase 5b instead of guessed from a secondary source.",
+      "mainValues_mNHN": { "NW_lowest_on_record": 517.59, "MW_mean": 518.18, "HW_highest_on_record": 519.98 },
+      "notes": "Record period shown as 1907-2025 for the extremes table, but the station's own 'observation period since 2010' note (from a separate Stammdaten search) suggests the current physical instrument/series may only start 2010, with earlier values carried forward from a predecessor gauge at the same site -- verify the real download's actual start date directly."
+    },
+    {
+      "id": "starnberg",
+      "name": "Starnberg / Starnberger See",
+      "river": "Starnberger See (lake)",
+      "siteNumber": "16663002",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/isar/starnberg-16663002/statistik",
+      "accessDate": "2026-11-09",
+      "top5_high_mNHN": [
+        { "level_mNHN": 585.08, "date": "1965-06-14" },
+        { "level_mNHN": 585.05, "date": "1965-06-22" },
+        { "level_mNHN": 584.99, "date": "2010-08-08" },
+        { "level_mNHN": 584.98, "date": "2010-08-17" },
+        { "level_mNHN": 584.98, "date": "1965-07-02" }
+      ],
+      "mainValues_mNHN": { "winter_min": 583.78, "mean": 584.21, "highest_on_record": 585.08 },
+      "notes": "Record period 1907-2025 for extremes, 1907-2022 for main values."
+    },
+    {
+      "id": "ammersee",
+      "name": "Stegen / Ammersee",
+      "river": "Ammersee (lake)",
+      "siteNumber": "16602008",
+      "sourceUrl": "https://www.hnd.bayern.de/pegel/isar/stegen-16602008/statistik",
+      "accessDate": "2026-11-09",
+      "top5_high_mNHN": [
+        { "level_mNHN": 534.93, "date": "1999-05-24" },
+        { "level_mNHN": 534.81, "date": "1965-06-12" },
+        { "level_mNHN": 534.46, "date": "1979-06-21" },
+        { "level_mNHN": 534.34, "date": "1965-06-02" },
+        { "level_mNHN": 534.20, "date": "2013-06-04" }
+      ],
+      "mainValues_mNHN": { "NW_lowest_on_record": 532.45, "MNW": 532.75, "MW_mean": 532.95, "MHW": 533.56, "HW_highest_on_record": 534.93 }
+    }
+  ]
+}

@@ -25,5 +25,17 @@ dist-ssr
 
 # Data pipeline — large raw downloads are not committed; see data/sources.json
 # for URL/size/SHA256 of every file so they can be re-downloaded exactly.
-data/raw/
+# Exceptions: small hand-written checklists/validation data meant to be
+# tracked (download instructions, HND statistik snapshot) — not raw data
+# dumps themselves.
+data/raw/*
+!data/raw/gkd/
+data/raw/gkd/*
+!data/raw/gkd/README.md
+!data/raw/ehyd/
+data/raw/ehyd/*
+!data/raw/ehyd/README.md
+!data/raw/hnd/
+data/raw/hnd/*
+!data/raw/hnd/statistik.json
 data-pipeline/venv/
