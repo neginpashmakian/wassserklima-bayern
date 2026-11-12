@@ -39,3 +39,5 @@ data/raw/ehyd/*
 data/raw/hnd/*
 !data/raw/hnd/statistik.json
 data-pipeline/venv/
+__pycache__/
+*.pyc
