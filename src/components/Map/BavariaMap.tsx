@@ -13,7 +13,7 @@ import { useClimateData } from '../../hooks/useClimateData'
 import { useFloodData } from '../../hooks/useFloodData'
 import { useLiveFloodData } from '../../hooks/useLiveFloodData'
 import { tempAnomalyColor, droughtColor } from '../../utils/colorScales'
-import { useBavariaHeatmapLayer, getDistrictDrought, getDecadeAvg, getClimateAnomaly, NO_DATA, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
+import { useBavariaHeatmapLayer, getDistrictDrought, getDecadeDroughtShare, getClimateAnomaly, NO_DATA, type GeoFeature, type AustriaFeature } from './BavariaHeatmap'
 import MapControls from './MapControls'
 import RiverProfile from './RiverProfile'
 import RiverComparison from './RiverComparison'
@@ -1173,9 +1173,10 @@ export default function BavariaMap() {
     if (splitMode && screenX !== undefined) {
       const splitPixelX = splitX * containerSize.width
       const era = screenX < splitPixelX ? '1950s' : '2010s'
-      const avg = screenX < splitPixelX ? getDecadeAvg(seed, 1950, 1959) : getDecadeAvg(seed, 2010, 2019)
-      if (avg === NO_DATA) return `No data (${era} avg)`
-      return `Drought index ${avg.toFixed(2)} (${era} avg)`
+      const startY = screenX < splitPixelX ? 1950 : 2010
+      const share = getDecadeDroughtShare(seed, startY)
+      if (share === NO_DATA) return `No data (${era})`
+      return `${Math.round(share * 100)}% of years in drought (${era})`
     }
     const val = getDistrictDrought(seed, year)
     return val === NO_DATA ? 'No data' : `Drought index ${val.toFixed(2)}`

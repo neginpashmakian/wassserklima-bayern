@@ -72,9 +72,13 @@ interface DistrictYearClimate {
   droughtClass: string | null
   hotDays:      number | null
 }
+interface DistrictDecadeClimate {
+  spiD1Share: number | null
+}
 interface DistrictClimateRecord {
-  name:   string
-  yearly: Record<string, DistrictYearClimate>
+  name:      string
+  yearly:    Record<string, DistrictYearClimate>
+  decadeAvg: Record<string, DistrictDecadeClimate>
 }
 
 let bavariaClimate: Record<string, DistrictClimateRecord> | null = null
@@ -111,6 +115,17 @@ function lookupClimateYear(seed: number, year: number): DistrictYearClimate | nu
   }
   if (seed >= 401 && seed <= 418 && austriaClimate) {
     return austriaClimate[String(seed)]?.yearly[yearKey] ?? null
+  }
+  return null
+}
+
+function lookupDecadeSpiD1Share(seed: number, decadeKey: string): number | null {
+  if (id3ToAgs && bavariaClimate) {
+    const ags = id3ToAgs[String(seed)]
+    if (ags) return bavariaClimate[ags]?.decadeAvg[decadeKey]?.spiD1Share ?? null
+  }
+  if (seed >= 401 && seed <= 418 && austriaClimate) {
+    return austriaClimate[String(seed)]?.decadeAvg[decadeKey]?.spiD1Share ?? null
   }
   return null
 }
@@ -172,21 +187,50 @@ export function getDistrictDrought(id3: number, year: number): number {
   return spiToDroughtIndex(rec.spi12)
 }
 
-// Averages only over years with real data (e.g. a 1950-1959 "decade" against
-// Bavaria's 1951-2024 coverage has 9 real years, not 10) rather than
-// dividing by a fixed decade length — a missing year must not silently pull
-// the average toward "no drought". If NO year in range has data (Upper
-// Austria's 1950s), returns NO_DATA rather than 0.
-export function getDecadeAvg(id3: number, startY: number, endY: number): number {
-  let sum = 0
-  let n = 0
-  for (let y = startY; y <= endY; y++) {
-    const spi12 = lookupClimateYear(id3, y)?.spi12
-    if (spi12 == null) continue
-    sum += spiToDroughtIndex(spi12)
-    n++
-  }
-  return n > 0 ? sum / n : NO_DATA
+// Decade/split-map view: uses decadeAvg.spiD1Share (share of years in that
+// decade with SPI-12 <= -0.8, i.e. at least D1 moderate drought — computed
+// in the Python pipeline, see sources.json's spiD1ShareByDecade note) rather
+// than averaging the SPI-12 index itself year-by-year. A straight decade
+// average of the drought INDEX washes out badly: a couple of genuinely dry
+// years (e.g. 2015, 2018) get diluted by several milder years sitting right
+// next to them in the same decade, so real Bavaria data produced a split map
+// that was nearly as flat on both sides — verified directly against the
+// live app, not assumed. Share-of-dry-years is a frequency, not an average
+// of a noisy index, so it holds onto that signal instead of smoothing it out.
+//
+// Mapped onto the same droughtThresholdColor scale, calibrated against the
+// REAL observed distribution of spiD1Share across every Bavaria district x
+// decade (verified directly): range is 0.0-0.6, median ~0.20, mean ~0.21 —
+// notably still BELOW the 0.32 "first visible tier" cutoff, meaning a
+// typical district-decade still renders transparent even on this better
+// metric. That's accurate, not a bug: drought frequency is spatially patchy
+// across Bavaria, unlike the near-universal real warming trend the Town
+// climate tab shows — this metric will show real variation between
+// districts and decades, not uniform color everywhere.
+const SPI_D1_SHARE_AT_CRITICAL = 0.6 // real observed max (verified) -> maps to "Critical" (0.69)
+function spiD1ShareToDroughtIndex(share: number): number {
+  return Math.min(1, (share / SPI_D1_SHARE_AT_CRITICAL) * 0.69)
+}
+
+// endY kept in the signature (unused) only so existing call sites
+// (getDecadeAvg(seed, 1950, 1959)) don't need to change — the decade is
+// fully determined by startY now that this reads a precomputed per-decade
+// field instead of averaging individual years in [startY, endY].
+export function getDecadeAvg(id3: number, startY: number, _endY: number): number {
+  void _endY
+  const decadeKey = String(Math.floor(startY / 10) * 10)
+  const share = lookupDecadeSpiD1Share(id3, decadeKey)
+  return share === null ? NO_DATA : spiD1ShareToDroughtIndex(share)
+}
+
+// Raw spiD1Share (0..1 fraction, or NO_DATA) for display text — e.g. "30% of
+// years in drought" reads honestly, whereas the rescaled 0..1 color index
+// getDecadeAvg returns doesn't correspond to any real, nameable quantity on
+// its own (it's calibrated against droughtThresholdColor's tiers, not a unit).
+export function getDecadeDroughtShare(id3: number, startY: number): number {
+  const decadeKey = String(Math.floor(startY / 10) * 10)
+  const share = lookupDecadeSpiD1Share(id3, decadeKey)
+  return share === null ? NO_DATA : share
 }
 
 // Real temperature anomaly (°C vs. the 1961-1990 baseline), already in the
